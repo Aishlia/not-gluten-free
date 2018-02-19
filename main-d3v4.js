@@ -1,8 +1,3 @@
-// demonstrating with hard-coded shapes
-// all coordinates relative to shape's local coordinates
-// vertices ordered counter-clockwise
-// colors are numbers starting at 0
-
 var A = {
     vertices: [ // assumed convex for now. In future allow multiple shapes
         {x: -50, y: -50},
@@ -11,8 +6,8 @@ var A = {
         {x: -50, y: 50}
     ],
     nodes: [
-        {x: 30, y: 30, color: 0},
-        {x: 30, y: -30, color: 1}
+        {x: 30, y: 30, color: 1},
+        {x: 30, y: -30, color: 0},
     ]
 };
 var B = {
@@ -44,23 +39,13 @@ var D = {
         {x: -50, y: -100},
         {x: 50,  y: -100},
         {x: 50,  y: 100},
-        {x: -50, y: 100}
+        {x: -50, y: 50}
     ],
     nodes: [
-        {x: 5, y: 40, color: 0},
-        {x: 30, y: -20, color: 1}
+        {x: 5, y: 40, color: 1},
+        {x: 30, y: -20, color: 0}
     ]
 };
-
-var num_shapes = 6;
-
-/*
-for(var i = 0; i < num_shapes; i++) {
-
-}
-Math.floor(Math.random() * 10); 0 to 9
-*/
-
 var shapes = [A, B, C, D];
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -73,9 +58,11 @@ var nodes, vertices, color;
 var sin, cos, threshold, overlap_x, overlap_y;
 
 var dt = 0.005; // time step
-var hooke = .5;  // hooke constant of springs
+var hooke = 1;  // hooke constant of springs
 var damping_t = 4; // damping factor for translational motion
 var damping_r = 3;  // damping factor for rotational motion
+var repulsion_factor = 2; // multiplier for repulsive force due to overlap
+var elasticity = 0; // elasticity of collisions
 
 var damping_t_c = Math.pow(10, -dt * damping_t);
 var damping_r_c = Math.pow(10, -dt * damping_r);
@@ -133,7 +120,7 @@ for (i = 0; i < shapes.length; i++) {
     s.forces = new SAT.Vector(0, 0); // net x, y force vector
     s.torques = 0;                   // net counter-clockwise torque
     s.lin_p = new SAT.Vector(0, 0);  // linear momentum: x, y
-    s.rot_p = 0;                     // cou nter-clockwise angular momentum
+    s.rot_p = 0;                     // counter-clockwise angular momentum
 
     s.m = 0.1; // mass
     s.I = 0;   // rotational inertia
@@ -144,21 +131,23 @@ for (i = 0; i < shapes.length; i++) {
     }
 
     // random placement
-    s.pos.x += (Math.random() - 0.5) * (window.innerWidth);
-    s.pos.y += (Math.random() - 0.5) * (window.innerHeight);
+    s.pos.x += (Math.random() - 0.5) * window.innerWidth;
+    s.pos.y += (Math.random() - 0.5) * window.innerHeight;
     s.setAngle(Math.random() * 2 * Math.PI);
 
     shapes[i] = s;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-
+console.log(shapes)
 var svg = d3.select("body").append("svg")
     .attr("width", window.innerWidth)
     .attr("height", window.innerHeight)
-    .append("g")
+  .append("g")
     .attr("transform", "translate(" + window.innerWidth / 2 + ", " +
                                       window.innerHeight / 2 + ")");
+
+console.log(svg);
 
 var fill = d3.scaleOrdinal(d3.schemeCategory10);
 
@@ -170,6 +159,8 @@ function affine(s) {
 }
 
 var shape = svg.selectAll('.shape').data(shapes);
+
+console.log(shape);
 
 shape.enter().append('g')
     .attr("class", "shape")
@@ -203,6 +194,8 @@ shape.enter().append('g')
             .attr("fill", function(n) { return fill(n.color); });
     });
 
+console.log(shape);
+
 function animate() {
 
     // do math
@@ -221,7 +214,11 @@ function animate() {
         s.pos.y += s.lin_p.y / s.m * dt; // y
 
         // 1b) updates positions of vertices as s.calcPoints
-        s.setAngle(s.angle + (s.rot_p / s.I * dt)); // theta
+        s.setAngle(
+
+            Math.floor((s.angle + (s.rot_p / s.I * dt)) / Math.PI * 4) * Math.PI / 4 // discretize to 30 degrees
+
+        ); // theta
 
         cos = Math.cos(s.angle);
         sin = Math.sin(s.angle);
@@ -281,7 +278,6 @@ function animate() {
             }
         }
     }
-
     // 3b) Collisions
     for (i = 0; i < shapes.length; i++) {
         s = shapes[i];
@@ -295,7 +291,6 @@ function animate() {
                 overlap_x -= response.overlapV.x;
                 overlap_y -= response.overlapV.y;
             }
-            //console.log(response);
             response.clear();
             if (SAT.testPolygonPolygon(s2, s, response)) {
                 overlap_x += response.overlapV.x;
@@ -314,13 +309,15 @@ function animate() {
         }
     }
 
+    //console.log(cost);
+
     function printCost() {
       document.getElementById('output').innerHTML = Math.round(cost);
     }
-    printCost();
+    printCost()
 
     // 4) update svg
-
+    //console.log(shape.enter('g'))
     shape
         .attr("transform", affine);
 
@@ -333,78 +330,12 @@ function animate() {
         threshold = Math.max(threshold, Math.abs(s.lin_p.y));
         threshold = Math.max(threshold, Math.abs(s.rot_p));
     }
-    if (threshold > 0.1 && iters < 500) {
+    if (threshold > 0.1 && iters < 1000) {
         window.requestAnimationFrame(animate);
     } else {
-        console.log('done', iters, "animate");
-        console.log("animate()");
+        console.log('done', iters);
     }
 
-}
-
-function randomize(){
-  for (var i = 0; i<shapes.length; i++) {
-    var s = shapes[i];
-    s.pos.x += (Math.random() - 0.5) * window.innerWidth;
-    s.pos.y += (Math.random() - 0.5) * window.innerHeight;
-    s.setAngle(Math.random() * 2 * Math.PI);
-  }
-}
-
-iters = 0;
-function square(){
-  for (var i = 0; i < shapes.length; i++) {
-    var s = shapes[i];
-    var angle = (s.angle % (2*Math.PI))/Math.PI
-    if (angle < 0) {
-      angle += 2;
-    }
-    if (angle > (7/4) || angle < (1/4)) {
-      s.setAngle(0);
-    } else if (angle >= (1/4) && angle < (3/4)) {
-      s.setAngle(Math.PI/2);
-    } else if (angle >= (3/4) && angle < (5/4)) {
-      s.setAngle(Math.PI);
-    } else if (angle >= (5/4) && angle < (7/4)) {
-      s.setAngle(2*Math.PI/2);
-    } else{
-      console.log("boop");
-    }
-  }
-  window.requestAnimationFrame(animate);
-  for (i = 0; i < shapes.length; i++) {
-      s = shapes[i];
-      for (j = 0; j < i; j++) { // each pair of shapes
-          s2 = shapes[j];
-
-          overlap_x = 0;
-          overlap_y = 0;
-          response.clear();
-          if (SAT.testPolygonPolygon(s, s2, response)) {
-              console.log(response.overlapV.x, response.overlapV.y);
-              overlap_x -= response.overlapV.x;
-              overlap_y -= response.overlapV.y;
-          }
-          response.clear();
-          if (SAT.testPolygonPolygon(s2, s, response)) {
-              console.log(response.overlapV.x, response.overlapV.y);
-              overlap_x += response.overlapV.x;
-              overlap_y += response.overlapV.y;
-          }
-
-          if (overlap_x || overlap_y) {
-
-              // conserves linear momentum
-              s.lin_p.x += overlap_x;
-              s.lin_p.y += overlap_y;
-              s2.lin_p.x -= overlap_x;
-              s2.lin_p.y -= overlap_y;
-
-          }
-      }
-  }
-  iters =+ 1;
-  window.requestAnimationFrame(animate);
 }
 
 window.requestAnimationFrame(animate);

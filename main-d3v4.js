@@ -158,11 +158,8 @@ function affine(s) {
         "rotate(" + (s.angle * 180 / Math.PI) + ")";
 }
 
-var shape = svg.selectAll('.shape').data(shapes);
-
-console.log(shape);
-
-shape.enter().append('g')
+var shape = svg.selectAll('.shape').data(shapes)
+.enter().append('g')
     .attr("class", "shape")
     .attr("transform", affine)
     // outline

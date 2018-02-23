@@ -192,6 +192,28 @@ var shape = svg.selectAll('.shape').data(shapes)
       .on("drag", dragged)
       .on("end", dragended));
 
+// print cost
+function evaluateCost() {
+  for (i = 0; i < grouped_nodes.length; i++) {
+    nodes = grouped_nodes[i];
+    for (j = 0; j < nodes.length; j++) {
+        n = nodes[j];
+        s = shapes[n.s_index];
+
+        // each pair of like-colored nodes (j, k)
+        for (k = 0; k < j; k++) {
+            n2 = nodes[k];
+            cost += ((n2.x - n.x) ** 2 + (n2.y - n.y) ** 2);
+          }
+        }
+      }
+  document.getElementById('output').innerHTML = Math.round(cost);
+}
+
+function printCost() {
+  document.getElementById('output').innerHTML = Math.round(cost);
+}
+
 // Drag and drop functions
 function dragstarted(d) {
   d3.select(this).raise().classed("active", true);
@@ -199,10 +221,12 @@ function dragstarted(d) {
 
 function dragged(d) {
   var hold = d.angle * 180/ Math.PI;
+  d.pos.x = d3.event.x
+  d.pos.y = d3.event.y
   d3.select(this)
-    .attr("transform", "translate(" + 0 + ", " + 0 + ") ")
-    .attr("transform", "translate(" + d3.event.x  + ", " + d3.event.y + ") " + "rotate(" + hold + " )");
-  console.log(d3.select(this).raise().classed("active"))
+     .attr("transform", "translate(" + 0 + ", " + 0 + ") ")
+     .attr("transform", "translate(" + d3.event.x  + ", " + d3.event.y + ") " + "rotate(" + hold + " )");
+  // evaluateCost(cost);
 }
 
 function dragended(d) {
@@ -241,7 +265,7 @@ function momentum_damping(s) {
   s.rot_p *= damping_r_c;
 }
 
-function update_nodes(grouped_nodes, shapes) {
+function update_nodes() {
   nodes = grouped_nodes[i];
 
   for (j = 0; j < nodes.length; j++) {
@@ -316,17 +340,14 @@ function animate() {
     }
 
     for (i = 0; i < grouped_nodes.length; i++) {
-        update_nodes(grouped_nodes, shapes);
+        update_nodes();
     }
 
     for (i = 0; i < shapes.length; i++) {
         collisions(shapes[i]);
     }
 
-    function printCost() {
-      document.getElementById('output').innerHTML = Math.round(cost);
-    }
-    printCost();
+    printCost(cost);
 
     // 4) update svg
     shape.attr("transform", affine);
@@ -337,8 +358,11 @@ function animate() {
     if (iters < 100) {
         window.requestAnimationFrame(animate);
     } else {
-        console.log('done', iters);
+        console.log('dones', iters);
     }
 }
 
-window.requestAnimationFrame(animate);
+function start() {
+  window.requestAnimationFrame(animate);
+  iters = 0;
+}

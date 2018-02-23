@@ -1,8 +1,3 @@
-// demonstrating with hard-coded shapes
-// all coordinates relative to shape's local coordinates
-// vertices ordered counter-clockwise
-// colors are numbers starting at 0
-
 var A = {
     vertices: [ // assumed convex for now. In future allow multiple shapes
         {x: -50, y: -50},
@@ -145,32 +140,28 @@ for (i = 0; i < shapes.length; i++) {
 
 ////////////////////////////////////////////////////////////////////////////////
 var svg = d3.select("body").append("svg")
-    .attrs({"width": window.innerWidth})
-    .attrs({"height": window.innerHeight})
-    .append("g")
-    .attrs({"transform": "translate(" + window.innerWidth / 2 + ", " +
-                                      window.innerHeight / 2 + ")"});
-
+    .attr("width", window.innerWidth)
+    .attr("height", window.innerHeight)
+  .append("g")
+    .attr("transform", "translate(" + window.innerWidth / 2 + ", " +
+                                      window.innerHeight / 2 + ")");
 
 var fill = d3.scaleOrdinal(d3.schemeCategory10);
-//var fill = d3.scale.category10();
 
 function affine(s) {
-    //console.log("s: ", s);
 	  return "translate(" +
         s.pos.x + ", " +
         s.pos.y + ") " +
         "rotate(" + (s.angle * 180 / Math.PI) + ")";
 }
 
-var shape = svg.selectAll('.shape').data(shapes);
-
-shape.enter().append('g')
-    .attrs({"class": "shape"})
-    .attrs({"transform": affine})
+var shape = svg.selectAll('.shape').data(shapes)
+    .enter().append('g')
+    .attr("class", "shape")
+    .attr("transform", affine)
     // outline
     .append("polygon")
-    .attrs({"points": function(s) {
+    .attr("points", function(s) {
         var out = "";
         for (i = 0; i < s.points.length; i++) {
             if (i > 0) {
@@ -180,7 +171,7 @@ shape.enter().append('g')
                    s.points[i].y.toString();
         }
         return out;
-    }})
+    })
     .style("stroke", "black")
     .style("fill-opacity", "0.0")
     .select(function() {
@@ -191,20 +182,17 @@ shape.enter().append('g')
     .each(function(s) {
         var node = d3.select(this).selectAll(".node").data(s.nodes);
         node.enter().append("circle")
-            .attrs({"cx": function(n) { return n.x; }})
-            .attrs({"cy": function(n) { return n.y; }})
-            .attrs({"r": 3})
-            .attrs({"fill": function(n) { return fill(n.color); }})
-            .merge(node);
+            .attr("cx", function(n) { return n.x; })
+            .attr("cy", function(n) { return n.y; })
+            .attr("r", 3)
+            .attr("fill", function(n) { return fill(n.color); });
     })
     .call(d3.drag()
       .on("start", dragstarted)
       .on("drag", dragged)
-      .on("end", dragended))
-    .merge(shape);
+      .on("end", dragended));
 
-//console.log("first shape: ", shape);
-
+// Drag and drop functions
 function dragstarted(d) {
   d3.select(this).raise().classed("active", true);
 }
@@ -212,130 +200,128 @@ function dragstarted(d) {
 function dragged(d) {
   var hold = d.angle * 180/ Math.PI;
   d3.select(this)
-    .attrs({"transform": "translate(" + 0 + ", " + 0 + ") "})
-    .attrs({"transform": "translate(" + d3.event.x + ", " + d3.event.y + ") "
-            + "rotate(" + hold + " )"});
+    .attr("transform", "translate(" + 0 + ", " + 0 + ") ")
+    .attr("transform", "translate(" + d3.event.x  + ", " + d3.event.y + ") " + "rotate(" + hold + " )");
+  console.log(d3.select(this).raise().classed("active"))
 }
-
-// + "rotate(" + (this.angle * 180 / Math.PI) + ")"
 
 function dragended(d) {
   d3.select(this).classed("active", false);
 }
 
+// Animate Functions
+function update_position(s) {
+  // 1a) linear and angular momentum
+  s.pos.x += s.lin_p.x / s.m * dt; // x
+  s.pos.y += s.lin_p.y / s.m * dt; // y
+
+  // 1b) updates positions of vertices as s.calcPoints
+  s.setAngle(
+      Math.floor((s.angle + (s.rot_p / s.I * dt)) / Math.PI * 4) * Math.PI / 4 // discretize to 30 degrees
+  ); // theta
+
+  cos = Math.cos(s.angle);
+  sin = Math.sin(s.angle);
+
+  // 1c) update positions of nodes
+  for (j = 0; j < s.nodes.length; j++) {
+
+      n = s.nodes[j];
+
+      n.dx = cos * n.ax - sin * n.ay;
+      n.dy = sin * n.ax + cos * n.ay;
+      n.x = s.pos.x + n.dx;
+      n.y = s.pos.y + n.dy;
+  }
+}
+
+function momentum_damping(s) {
+  s.lin_p.x *= damping_t_c;
+  s.lin_p.y *= damping_t_c;
+  s.rot_p *= damping_r_c;
+}
+
+function update_nodes(grouped_nodes, shapes) {
+  nodes = grouped_nodes[i];
+
+  for (j = 0; j < nodes.length; j++) {
+      n = nodes[j];
+      s = shapes[n.s_index];
+
+      // each pair of like-colored nodes (j, k)
+      for (k = 0; k < j; k++) {
+          n2 = nodes[k];
+          s2 = shapes[n2.s_index];
+
+          // linear forces applied to both shapes
+          s.lin_p.x += hooke * (n2.x - n.x) * dt;
+          s.lin_p.y += hooke * (n2.y - n.y) * dt;
+          s2.lin_p.x += hooke * (n.x - n2.x) * dt;
+          s2.lin_p.y += hooke * (n.y - n2.y) * dt;
+
+          // torques applied to both shapes
+          s.rot_p += hooke * (
+              n.dx * (n2.y - n.y) -
+              n.dy * (n2.x - n.x)
+          ) * dt;
+          s2.rot_p += hooke * (
+              n2.dx * (n.y - n2.y) -
+              n2.dy * (n.x - n2.x)
+          ) * dt;
+
+          // update cost
+          cost += ((n2.x - n.x) ** 2 + (n2.y - n.y) ** 2);
+      }
+  }
+}
+
+function collisions(s) {
+  for (j = 0; j < i; j++) { // each pair of shapes
+      s2 = shapes[j];
+
+      overlap_x = 0;
+      overlap_y = 0;
+      response.clear();
+      if (SAT.testPolygonPolygon(s, s2, response)) {
+          overlap_x -= response.overlapV.x;
+          overlap_y -= response.overlapV.y;
+      }
+      response.clear();
+      if (SAT.testPolygonPolygon(s2, s, response)) {
+          overlap_x += response.overlapV.x;
+          overlap_y += response.overlapV.y;
+      }
+
+      if (overlap_x || overlap_y) {
+
+          // conserves linear momentum
+          s.lin_p.x += overlap_x;
+          s.lin_p.y += overlap_y;
+          s2.lin_p.x -= overlap_x;
+          s2.lin_p.y -= overlap_y;
+
+      }
+  }
+}
+
 function animate() {
-
-    // do math
-    // for simplicity, assume all shapes have
-    // unit translational and rotational inertia
-    ////////////////////////////////////////////////////////////////////////////
-
     cost = 0;
 
-    // 1) update positions using last momenta:
     for (i = 0; i < shapes.length; i++) {
-        s = shapes[i];
-
-        // 1a) linear and angular momentum
-        s.pos.x += s.lin_p.x / s.m * dt; // x
-        s.pos.y += s.lin_p.y / s.m * dt; // y
-
-        // 1b) updates positions of vertices as s.calcPoints
-        s.setAngle(
-            Math.floor((s.angle + (s.rot_p / s.I * dt)) / Math.PI * 4) * Math.PI / 4 // discretize to 30 degrees
-
-        ); // theta
-
-        cos = Math.cos(s.angle);
-        sin = Math.sin(s.angle);
-
-        // 1c) update positions of nodes
-        for (j = 0; j < s.nodes.length; j++) {
-
-            n = s.nodes[j];
-
-            n.dx = cos * n.ax - sin * n.ay;
-            n.dy = sin * n.ax + cos * n.ay;
-            n.x = s.pos.x + n.dx;
-            n.y = s.pos.y + n.dy;
-        }
+        update_position(shapes[i]);
     }
 
-    // 2) apply momentum damping
     for (i = 0; i < shapes.length; i++) {
-        s = shapes[i];
-
-        s.lin_p.x *= damping_t_c;
-        s.lin_p.y *= damping_t_c;
-        s.rot_p *= damping_r_c;
+        momentum_damping(shapes[i]);
     }
 
-    // 3a) calculate forces using new positions, and immediately update momenta
     for (i = 0; i < grouped_nodes.length; i++) {
-        nodes = grouped_nodes[i];
-
-        for (j = 0; j < nodes.length; j++) {
-            n = nodes[j];
-            s = shapes[n.s_index];
-
-            // each pair of like-colored nodes (j, k)
-            for (k = 0; k < j; k++) {
-                n2 = nodes[k];
-                s2 = shapes[n2.s_index];
-
-                // linear forces applied to both shapes
-                s.lin_p.x += hooke * (n2.x - n.x) * dt;
-                s.lin_p.y += hooke * (n2.y - n.y) * dt;
-                s2.lin_p.x += hooke * (n.x - n2.x) * dt;
-                s2.lin_p.y += hooke * (n.y - n2.y) * dt;
-
-                // torques applied to both shapes
-                s.rot_p += hooke * (
-                    n.dx * (n2.y - n.y) -
-                    n.dy * (n2.x - n.x)
-                ) * dt;
-                s2.rot_p += hooke * (
-                    n2.dx * (n.y - n2.y) -
-                    n2.dy * (n.x - n2.x)
-                ) * dt;
-
-                // update cost
-                cost += ((n2.x - n.x) ** 2 + (n2.y - n.y) ** 2);
-            }
-        }
+        update_nodes(grouped_nodes, shapes);
     }
-    // 3b) Collisions
+
     for (i = 0; i < shapes.length; i++) {
-        s = shapes[i];
-        for (j = 0; j < i; j++) { // each pair of shapes
-            s2 = shapes[j];
-
-            overlap_x = 0;
-            overlap_y = 0;
-            response.clear();
-            if (SAT.testPolygonPolygon(s, s2, response)) {
-                overlap_x -= response.overlapV.x;
-                overlap_y -= response.overlapV.y;
-            }
-            response.clear();
-            if (SAT.testPolygonPolygon(s2, s, response)) {
-                overlap_x += response.overlapV.x;
-                overlap_y += response.overlapV.y;
-            }
-
-            if (overlap_x || overlap_y) {
-
-                // conserves linear momentum
-                s.lin_p.x += overlap_x;
-                s.lin_p.y += overlap_y;
-                s2.lin_p.x -= overlap_x;
-                s2.lin_p.y -= overlap_y;
-
-            }
-        }
+        collisions(shapes[i]);
     }
-
-    //console.log(cost);
 
     function printCost() {
       document.getElementById('output').innerHTML = Math.round(cost);
@@ -343,28 +329,16 @@ function animate() {
     printCost();
 
     // 4) update svg
-    //console.log(affine);
-    //console.log("shape: ",shape);
-    shape.attrs({"transform": affine})
-         .attr("transform", affine)
-         .merge(shape);
-    //console.log("hi")
+    shape.attr("transform", affine);
 
     // 5) Early termination or recursion
     iters += 1;
-    threshold = 0; // maximum component of momentum
 
-    for (i = 0; i < shapes.length; i++) {
-        threshold = Math.max(threshold, Math.abs(s.lin_p.x));
-        threshold = Math.max(threshold, Math.abs(s.lin_p.y));
-        threshold = Math.max(threshold, Math.abs(s.rot_p));
-    }
-    if (threshold > 0.1 && iters < 10000) {
+    if (iters < 100) {
         window.requestAnimationFrame(animate);
     } else {
         console.log('done', iters);
     }
-
 }
 
 window.requestAnimationFrame(animate);

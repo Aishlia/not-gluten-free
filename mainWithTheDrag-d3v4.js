@@ -220,13 +220,14 @@ function dragstarted(d) {
 }
 
 function dragged(d) {
+  cost = 0;
   var hold = d.angle * 180/ Math.PI;
   d.pos.x = d3.event.x
   d.pos.y = d3.event.y
   d3.select(this)
      .attr("transform", "translate(" + 0 + ", " + 0 + ") ")
      .attr("transform", "translate(" + d3.event.x  + ", " + d3.event.y + ") " + "rotate(" + hold + " )");
-  // evaluateCost(cost);
+  //evaluateCost(cost);
 }
 
 function dragended(d) {

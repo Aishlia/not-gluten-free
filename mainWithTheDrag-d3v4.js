@@ -1,4 +1,4 @@
-/*
+
 var A = {
     vertices: [ // assumed convex for now. In future allow multiple shapes
         {x: -50, y: -50},
@@ -47,20 +47,20 @@ var D = {
         {x: 30, y: -20, color: 0}
     ]
 };
-*/
 
-var A = {
-    vertices: [
-        {x: 50, y: 0},
-        {x: 50,  y: 200},
-        {x: 100,  y: 200},
-        {x: 100, y: 0},
-        {x: 75, y:-30}
-    ],
-    nodes: [
-        {x: 75, y: -10, color: 1},
-    ]
-};
+
+// var A = {
+//     vertices: [
+//         {x: 50, y: 0},
+//         {x: 50,  y: 200},
+//         {x: 100,  y: 200},
+//         {x: 100, y: 0},
+//         {x: 75, y:-30}
+//     ],
+//     nodes: [
+//         {x: 75, y: -10, color: 1},
+//     ]
+// };
 
 var shapes = [A, B, C, D];
 //A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D];
@@ -70,7 +70,6 @@ var shapes = [A, B, C, D];
 
 ////////////////////////////////////////////////////////////////////////////////
 // Initialize data
-
 var grouped_nodes = [];
 
 var i, j, k, s, s2, n, n2, v, v2;
@@ -218,7 +217,6 @@ function evaluateCost() {
           }
         }
       }
-  console.log("cost",cost)
   printCost()
 }
 
@@ -392,9 +390,29 @@ function animate() {
     } else {
         console.log('dones', iters);
     }
+
 }
 
 function start() {
-  window.requestAnimationFrame(animate);
   iters = 0;
+  window.requestAnimationFrame(animate);
 }
+//
+// function reset() { // Not working
+//   iters = 0;
+//   for (i = 0; i < shapes.length; i++) {
+//     s.pos.x += (Math.random() - 0.5) * window.innerWidth;
+//     s.pos.y += (Math.random() - 0.5) * window.innerHeight;
+//     s.setAngle(Math.random() * 2 * Math.PI);
+//   }
+//   window.requestAnimationFrame(animate);
+// }
+//
+// function start_animation() {
+//   iters = 0;
+//   window.requestAnimationFrame(animate);
+// }
+// function start_no_animation() { // Not working
+//   window.requestAnimationFrame(animate);
+//   iters = 0;
+// }

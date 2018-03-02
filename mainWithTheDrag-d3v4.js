@@ -39,14 +39,20 @@ var D = {
         {x: -50, y: -100},
         {x: 50,  y: -100},
         {x: 50,  y: 100},
-        {x: -50, y: 50}
+        {x: -50, y: 100}
     ],
     nodes: [
         {x: 5, y: 40, color: 1},
         {x: 30, y: -20, color: 0}
     ]
 };
-var shapes = [A, B, C, D];
+
+
+var shapes = [A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D];
+//A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D];
+// A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D,
+// A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D,
+// A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D];
 
 ////////////////////////////////////////////////////////////////////////////////
 // Initialize data
@@ -58,7 +64,8 @@ var nodes, vertices, color;
 var sin, cos, threshold, overlap_x, overlap_y;
 
 var dt = 0.005; // time step
-var hooke = 1;  // hooke constant of springs
+var hooke = 2.5*(.794**(shapes.length))
+// var hooke = 1;  // hooke constant of springs
 var damping_t = 4; // damping factor for translational motion
 var damping_r = 3;  // damping factor for rotational motion
 var repulsion_factor = 2; // multiplier for repulsive force due to overlap
@@ -200,14 +207,15 @@ function evaluateCost() {
         n = nodes[j];
         s = shapes[n.s_index];
 
-        // each pair of like-colored nodes (j, k)
         for (k = 0; k < j; k++) {
             n2 = nodes[k];
+            // console.log(n.x, n.y, n2.x, n2.y)
             cost += ((n2.x - n.x) ** 2 + (n2.y - n.y) ** 2);
           }
         }
       }
-  document.getElementById('output').innerHTML = Math.round(cost);
+  console.log("cost",cost)
+  printCost()
 }
 
 function printCost() {
@@ -227,7 +235,7 @@ function dragged(d) {
   d3.select(this)
      .attr("transform", "translate(" + 0 + ", " + 0 + ") ")
      .attr("transform", "translate(" + d3.event.x  + ", " + d3.event.y + ") " + "rotate(" + hold + " )");
-  //evaluateCost(cost);
+  evaluateCost();
 }
 
 function dragended(d) {
@@ -242,7 +250,8 @@ function update_position(s) {
 
   // 1b) updates positions of vertices as s.calcPoints
   s.setAngle(
-      Math.floor((s.angle + (s.rot_p / s.I * dt)) / Math.PI * 4) * Math.PI / 4 // discretize to 30 degrees
+      // s.angle + (s.rot_p / s.I * dt) // no discretization
+      Math.floor((s.angle + (s.rot_p / s.I * dt)) / Math.PI * 2) * Math.PI / 2 // discretize to 90 degrees
   ); // theta
 
   cos = Math.cos(s.angle);
@@ -332,21 +341,17 @@ function collisions(s) {
 function animate() {
     cost = 0;
 
-    for (i = 0; i < shapes.length; i++) {
+    for (i = 0; i < shapes.length; i++)
         update_position(shapes[i]);
-    }
 
-    for (i = 0; i < shapes.length; i++) {
+    for (i = 0; i < shapes.length; i++)
         momentum_damping(shapes[i]);
-    }
 
-    for (i = 0; i < grouped_nodes.length; i++) {
+    for (i = 0; i < grouped_nodes.length; i++)
         update_nodes();
-    }
 
-    for (i = 0; i < shapes.length; i++) {
+    for (i = 0; i < shapes.length; i++)
         collisions(shapes[i]);
-    }
 
     printCost(cost);
 
@@ -356,7 +361,9 @@ function animate() {
     // 5) Early termination or recursion
     iters += 1;
 
-    if (iters < 100) {
+    //  d3.select(this).raise().classed("active", true);
+
+    if (iters < 10000) {
         window.requestAnimationFrame(animate);
     } else {
         console.log('dones', iters);

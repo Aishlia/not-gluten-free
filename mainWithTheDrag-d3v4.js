@@ -1,4 +1,3 @@
-
 var A = {
     vertices: [ // assumed convex for now. In future allow multiple shapes
         {x: -50, y: -50},
@@ -62,7 +61,7 @@ var D = {
 //     ]
 // };
 
-var shapes = [A, B, C, D];
+var shapes = [A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D];
 //A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D];
 // A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D,
 // A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D,
@@ -70,6 +69,8 @@ var shapes = [A, B, C, D];
 
 ////////////////////////////////////////////////////////////////////////////////
 // Initialize data
+var play_animation = true;
+
 var grouped_nodes = [];
 
 var i, j, k, s, s2, n, n2, v, v2;
@@ -340,8 +341,9 @@ function collisions(s, vals) {
   }
 }
 
-function animate() {
+function animate(shapes) {
   // Numbers for the other numbers
+  var total_iters = 1000; // Total number of iterations (for testing)
   var dt = .005
   var damping_t = 4; // damping factor for translational motion
   var damping_r = 3;  // damping factor for rotational motion
@@ -380,13 +382,11 @@ function animate() {
     // 4) update svg
     shape.attr("transform", affine);
 
-    // 5) Early termination or recursion
     iters += 1;
 
-    //  d3.select(this).raise().classed("active", true);
 
-    if (iters < 1000) {
-        window.requestAnimationFrame(animate);
+    if (iters < total_iters) {
+        window.requestAnimationFrame(animate(shapes));
     } else {
         console.log('dones', iters);
     }
@@ -394,8 +394,9 @@ function animate() {
 }
 
 function start() {
+  play_animation = true;
   iters = 0;
-  window.requestAnimationFrame(animate);
+  window.requestAnimationFrame(animate(shapes));
 }
 //
 // function reset() { // Not working
@@ -412,7 +413,8 @@ function start() {
 //   iters = 0;
 //   window.requestAnimationFrame(animate);
 // }
-// function start_no_animation() { // Not working
-//   window.requestAnimationFrame(animate);
-//   iters = 0;
-// }
+function start_no_animation() { // Not working
+  play_animation = false;
+  window.requestAnimationFrame(animate);
+  iters = 0;
+}

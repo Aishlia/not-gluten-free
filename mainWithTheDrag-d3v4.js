@@ -1,3 +1,4 @@
+/*
 var A = {
     vertices: [ // assumed convex for now. In future allow multiple shapes
         {x: -50, y: -50},
@@ -46,9 +47,22 @@ var D = {
         {x: 30, y: -20, color: 0}
     ]
 };
+*/
 
+var A = {
+    vertices: [
+        {x: 50, y: 0},
+        {x: 50,  y: 200},
+        {x: 100,  y: 200},
+        {x: 100, y: 0},
+        {x: 75, y:-30}
+    ],
+    nodes: [
+        {x: 75, y: -10, color: 1},
+    ]
+};
 
-var shapes = [A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D];
+var shapes = [A, B, C, D];
 //A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D];
 // A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D,
 // A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D,
@@ -328,7 +342,7 @@ function collisions(s, vals) {
   }
 }
 
-function animate(shapes) {
+function animate() {
   // Numbers for the other numbers
   var dt = .005
   var damping_t = 4; // damping factor for translational motion
@@ -373,14 +387,14 @@ function animate(shapes) {
 
     //  d3.select(this).raise().classed("active", true);
 
-    if (iters < 10000) {
-        window.requestAnimationFrame(animate(shapes));
+    if (iters < 1000) {
+        window.requestAnimationFrame(animate);
     } else {
         console.log('dones', iters);
     }
 }
 
 function start() {
-  window.requestAnimationFrame(animate(shapes));
+  window.requestAnimationFrame(animate);
   iters = 0;
 }

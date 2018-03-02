@@ -61,18 +61,8 @@ var grouped_nodes = [];
 
 var i, j, k, s, s2, n, n2, v, v2;
 var nodes, vertices, color;
-var sin, cos, threshold, overlap_x, overlap_y;
 
-var dt = 0.005; // time step
-var hooke = 2.5*(.794**(shapes.length))
-// var hooke = 1;  // hooke constant of springs
-var damping_t = 4; // damping factor for translational motion
-var damping_r = 3;  // damping factor for rotational motion
-var repulsion_factor = 2; // multiplier for repulsive force due to overlap
-var elasticity = 0; // elasticity of collisions
-
-var damping_t_c = Math.pow(10, -dt * damping_t);
-var damping_r_c = Math.pow(10, -dt * damping_r);
+var hooke = 2.5*(.794**(shapes.length)); // elasticity of collisions
 
 var iters = 0;
 var cost;
@@ -243,39 +233,39 @@ function dragended(d) {
 }
 
 // Animate Functions
-function update_position(s) {
+function update_position(s, cons, vals) {
   // 1a) linear and angular momentum
-  s.pos.x += s.lin_p.x / s.m * dt; // x
-  s.pos.y += s.lin_p.y / s.m * dt; // y
+  s.pos.x += s.lin_p.x / s.m * cons['dt']; // x
+  s.pos.y += s.lin_p.y / s.m * cons['dt']; // y
 
   // 1b) updates positions of vertices as s.calcPoints
   s.setAngle(
       // s.angle + (s.rot_p / s.I * dt) // no discretization
-      Math.floor((s.angle + (s.rot_p / s.I * dt)) / Math.PI * 2) * Math.PI / 2 // discretize to 90 degrees
+      Math.floor((s.angle + (s.rot_p / s.I * cons['dt'])) / Math.PI * 2) * Math.PI / 2 // discretize to 90 degrees
   ); // theta
 
-  cos = Math.cos(s.angle);
-  sin = Math.sin(s.angle);
+  vals['cos'] = Math.cos(s.angle);
+  vals['sin'] = Math.sin(s.angle);
 
   // 1c) update positions of nodes
   for (j = 0; j < s.nodes.length; j++) {
 
       n = s.nodes[j];
 
-      n.dx = cos * n.ax - sin * n.ay;
-      n.dy = sin * n.ax + cos * n.ay;
+      n.dx = vals['cos'] * n.ax - vals['sin'] * n.ay;
+      n.dy = vals['sin'] * n.ax + vals['cos'] * n.ay;
       n.x = s.pos.x + n.dx;
       n.y = s.pos.y + n.dy;
   }
 }
 
-function momentum_damping(s) {
-  s.lin_p.x *= damping_t_c;
-  s.lin_p.y *= damping_t_c;
-  s.rot_p *= damping_r_c;
+function momentum_damping(s, cons) {
+  s.lin_p.x *= cons['damping_t_c'];
+  s.lin_p.y *= cons['damping_t_c'];
+  s.rot_p *= cons['damping_r_c'];
 }
 
-function update_nodes() {
+function update_nodes(cons) {
   nodes = grouped_nodes[i];
 
   for (j = 0; j < nodes.length; j++) {
@@ -288,20 +278,20 @@ function update_nodes() {
           s2 = shapes[n2.s_index];
 
           // linear forces applied to both shapes
-          s.lin_p.x += hooke * (n2.x - n.x) * dt;
-          s.lin_p.y += hooke * (n2.y - n.y) * dt;
-          s2.lin_p.x += hooke * (n.x - n2.x) * dt;
-          s2.lin_p.y += hooke * (n.y - n2.y) * dt;
+          s.lin_p.x += hooke * (n2.x - n.x) * cons['dt'];
+          s.lin_p.y += hooke * (n2.y - n.y) * cons['dt'];
+          s2.lin_p.x += hooke * (n.x - n2.x) * cons['dt'];
+          s2.lin_p.y += hooke * (n.y - n2.y) * cons['dt'];
 
           // torques applied to both shapes
           s.rot_p += hooke * (
               n.dx * (n2.y - n.y) -
               n.dy * (n2.x - n.x)
-          ) * dt;
+          ) * cons['dt'];
           s2.rot_p += hooke * (
               n2.dx * (n.y - n2.y) -
               n2.dy * (n.x - n2.x)
-          ) * dt;
+          ) * cons['dt'];
 
           // update cost
           cost += ((n2.x - n.x) ** 2 + (n2.y - n.y) ** 2);
@@ -309,49 +299,69 @@ function update_nodes() {
   }
 }
 
-function collisions(s) {
+function collisions(s, vals) {
   for (j = 0; j < i; j++) { // each pair of shapes
       s2 = shapes[j];
 
-      overlap_x = 0;
-      overlap_y = 0;
+      vals['overlap_x'] = 0;
+      vals['overlap_y'] = 0;
       response.clear();
       if (SAT.testPolygonPolygon(s, s2, response)) {
-          overlap_x -= response.overlapV.x;
-          overlap_y -= response.overlapV.y;
+          vals['overlap_x'] -= response.overlapV.x;
+          vals['overlap_y'] -= response.overlapV.y;
       }
       response.clear();
       if (SAT.testPolygonPolygon(s2, s, response)) {
-          overlap_x += response.overlapV.x;
-          overlap_y += response.overlapV.y;
+          vals['overlap_x'] += response.overlapV.x;
+          vals['overlap_y'] += response.overlapV.y;
       }
 
-      if (overlap_x || overlap_y) {
+      if (vals['overlap_x'] || vals['overlap_y']) {
 
           // conserves linear momentum
-          s.lin_p.x += overlap_x;
-          s.lin_p.y += overlap_y;
-          s2.lin_p.x -= overlap_x;
-          s2.lin_p.y -= overlap_y;
+          s.lin_p.x += vals['overlap_x'];
+          s.lin_p.y += vals['overlap_y'];
+          s2.lin_p.x -= vals['overlap_x'];
+          s2.lin_p.y -= vals['overlap_y'];
 
       }
   }
 }
 
-function animate() {
+function animate(shapes) {
+  // Numbers for the other numbers
+  var dt = .005
+  var damping_t = 4; // damping factor for translational motion
+  var damping_r = 3;  // damping factor for rotational motion
+
+  // Constants
+  const constants = {
+    "dt": dt, // time step
+    "damping_t_c": Math.pow(10, -dt * damping_t), // damping factor for translational motion
+    "damping_r_c": Math.pow(10, -dt * damping_r), // damping factor for rotational motion
+  }
+
+  // Variables that need to be passed from function to function
+  var values = {
+    "sin": 0,
+    "cos": 0,
+    "overlap_x": 0,
+    "overlap_y": 0
+  }
+
     cost = 0;
 
     for (i = 0; i < shapes.length; i++)
-        update_position(shapes[i]);
+        update_position(shapes[i], constants, values);
 
     for (i = 0; i < shapes.length; i++)
-        momentum_damping(shapes[i]);
+        momentum_damping(shapes[i], constants);
 
     for (i = 0; i < grouped_nodes.length; i++)
-        update_nodes();
+        update_nodes(constants);
 
     for (i = 0; i < shapes.length; i++)
-        collisions(shapes[i]);
+        collisions(shapes[i], values);
 
     printCost(cost);
 
@@ -364,13 +374,13 @@ function animate() {
     //  d3.select(this).raise().classed("active", true);
 
     if (iters < 10000) {
-        window.requestAnimationFrame(animate);
+        window.requestAnimationFrame(animate(shapes));
     } else {
         console.log('dones', iters);
     }
 }
 
 function start() {
-  window.requestAnimationFrame(animate);
+  window.requestAnimationFrame(animate(shapes));
   iters = 0;
 }

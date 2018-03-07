@@ -248,7 +248,7 @@ function update_position(s, cons, vals) {
 
   // 1b) updates positions of vertices as s.calcPoints
   s.setAngle(
-      // s.angle + (s.rot_p / s.I * dt) // no discretization
+      // s.angle + (s.rot_p / s.I * cons['dt']) // no discretization
       Math.floor((s.angle + (s.rot_p / s.I * cons['dt'])) / Math.PI * 2) * Math.PI / 2 // discretize to 90 degrees
   ); // theta
 
@@ -381,7 +381,7 @@ function animate(shapes, grouped_nodes) {
     for (i = 0; i < shapes.length; i++)
         collisions(shapes[i], values);
 
-    printCost(cost);
+    printCost(cost.cost);
 
     // 4) update svg
     shape.attr("transform", affine);

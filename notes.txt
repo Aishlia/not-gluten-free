@@ -1,7 +1,0 @@
-- janky solution to not displaying the animation sequence, tons of errors
-- Added animate(shapes) for the function decleration and the requestAnimationFrame things
-- SUBSTANTIALLY reduced run time, like, by a lot
-- only the start/resume buttom works, and it only starts
-  - refesh to reset
-- The start: no animation has a function behind it but it doesnt work,
-  - Make running with/without animation an option

@@ -47,6 +47,20 @@ var D = {
     ]
 };
 
+
+// var A = {
+//     vertices: [
+//         {x: 50, y: 0},
+//         {x: 50,  y: 200},
+//         {x: 100,  y: 200},
+//         {x: 100, y: 0},
+//         {x: 75, y:-30}
+//     ],
+//     nodes: [
+//         {x: 75, y: -10, color: 1},
+//     ]
+// };
+
 var shapes = [A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D];
 //A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D];
 // A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D,
@@ -77,7 +91,7 @@ for (i = 0; i < shapes.length; i++) {
         n = s.nodes[j];
         color = n.color;
         n = new SAT.Vector(n.x, n.y);
-        n.color = color;
+	// })lklkjjjlkjjjjjjlkj// })lklkjjjlkjjjjjjlkj// })lklkjjjlkjjjjjjlkj// })lklkjjjlkjjjjjjlkj// })lklkjjjlkjjjjjjlkj// })lklkjjjlkjjjjjjlkj// })lklkjjjlkjjjjjjlkj// })lklkjjjlkjjjjjjlkj        n.color = color;
         nodes[j] = n;
 
         if (grouped_nodes[n.color] == undefined) {
@@ -185,11 +199,10 @@ var shape = svg.selectAll('.shape').data(shapes)
       .on("end", dragended));
     // .on("click", function(){
     //   /////
-    // }
+    // })
 
 // print cost
-function evaluateCost(grouped_nodes) {
-  var cost = 0;
+function evaluateCost(n, n2, cost, grouped_nodes) {
   for (i = 0; i < grouped_nodes.length; i++) {
     nodes = grouped_nodes[i];
     for (j = 0; j < nodes.length; j++) {
@@ -203,7 +216,7 @@ function evaluateCost(grouped_nodes) {
           }
         }
       }
-  return cost;
+  printCost(cost)
 }
 
 function printCost(cost) {
@@ -215,22 +228,18 @@ function dragstarted(d) {
   d3.select(this).raise().classed("active", true);
 }
 
-function dragged(d, n2) {
-  var cost = 0;
+function dragged(d, n2, cost) {
+  cost = 0;
   var hold = d.angle * 180/ Math.PI;
   d.pos.x = d3.event.x
   d.pos.y = d3.event.y
   d3.select(this)
      .attr("transform", "translate(" + 0 + ", " + 0 + ") ")
      .attr("transform", "translate(" + d3.event.x  + ", " + d3.event.y + ") " + "rotate(" + hold + " )");
-  cost = evaluateCost(grouped_nodes);
-  printCost(cost);
+  evaluateCost(n, n2, cost, grouped_nodes);
 }
 
 function dragended(d) {
-  var cost = 0;
-  cost = evaluateCost(grouped_nodes);
-  printCost(cost);
   d3.select(this).classed("active", false);
 }
 
@@ -267,36 +276,36 @@ function momentum_damping(s, cons) {
   s.rot_p *= cons['damping_r_c'];
 }
 
-function update_nodes(grouped_nodes, cons, hooke) {
+function update_nodes(grouped_nodes, cons, hooke, nodes, cost) {
   nodes = grouped_nodes[i];
 
   for (j = 0; j < nodes.length; j++) {
-      n = nodes[j];
-      s = shapes[n.s_index];
+      nodes.n = nodes[j];
+      nodes.s = shapes[nodes.n.s_index];
 
       // each pair of like-colored nodes (j, k)
       for (k = 0; k < j; k++) {
-          n2 = nodes[k];
-          s2 = shapes[n2.s_index];
+          nodes.n2 = nodes[k];
+          nodes.s2 = shapes[nodes.n2.s_index];
 
           // linear forces applied to both shapes
-          s.lin_p.x += hooke * (n2.x - n.x) * cons['dt'];
-          s.lin_p.y += hooke * (n2.y - n.y) * cons['dt'];
-          s2.lin_p.x += hooke * (n.x - n2.x) * cons['dt'];
-          s2.lin_p.y += hooke * (n.y - n2.y) * cons['dt'];
+          nodes.s.lin_p.x += hooke * (nodes.n2.x - nodes.n.x) * cons['dt'];
+          nodes.s.lin_p.y += hooke * (nodes.n2.y - nodes.n.y) * cons['dt'];
+          nodes.s2.lin_p.x += hooke * (nodes.n.x - nodes.n2.x) * cons['dt'];
+          nodes.s2.lin_p.y += hooke * (nodes.n.y - nodes.n2.y) * cons['dt'];
 
           // torques applied to both shapes
-          s.rot_p += hooke * (
-              n.dx * (n2.y - n.y) -
-              n.dy * (n2.x - n.x)
+          nodes.s.rot_p += hooke * (
+              nodes.n.dx * (nodes.n2.y - nodes.n.y) -
+              nodes.n.dy * (nodes.n2.x - nodes.n.x)
           ) * cons['dt'];
-          s2.rot_p += hooke * (
-              n2.dx * (n.y - n2.y) -
-              n2.dy * (n.x - n2.x)
+          nodes.s2.rot_p += hooke * (
+              nodes.n2.dx * (nodes.n.y - nodes.n2.y) -
+              nodes.n2.dy * (nodes.n.x - nodes.n2.x)
           ) * cons['dt'];
 
-          // // update cost
-          // cost.cost += ((nodes.n2.x - nodes.n.x) ** 2 + (nodes.n2.y - nodes.n.y) ** 2);
+          // update cost
+          cost.cost += ((nodes.n2.x - nodes.n.x) ** 2 + (nodes.n2.y - nodes.n.y) ** 2);
       }
   }
 }
@@ -305,25 +314,27 @@ function collisions(s, vals) {
   for (j = 0; j < i; j++) { // each pair of shapes
       s2 = shapes[j];
 
-      var overlap_x = 0;
-      var overlap_y = 0;
+      vals['overlap_x'] = 0;
+      vals['overlap_y'] = 0;
       response.clear();
       if (SAT.testPolygonPolygon(s, s2, response)) {
-          overlap_x -= response.overlapV.x;
-          overlap_y -= response.overlapV.y;
+          vals['overlap_x'] -= response.overlapV.x;
+          vals['overlap_y'] -= response.overlapV.y;
       }
       response.clear();
       if (SAT.testPolygonPolygon(s2, s, response)) {
-          overlap_x += response.overlapV.x;
-          overlap_y += response.overlapV.y;
+          vals['overlap_x'] += response.overlapV.x;
+          vals['overlap_y'] += response.overlapV.y;
       }
 
-      if (overlap_x || overlap_y) {
+      if (vals['overlap_x'] || vals['overlap_y']) {
+
           // conserves linear momentum
-          s.lin_p.x += overlap_x;
-          s.lin_p.y += overlap_y;
-          s2.lin_p.x -= overlap_x;
-          s2.lin_p.y -= overlap_y;
+          s.lin_p.x += vals['overlap_x'];
+          s.lin_p.y += vals['overlap_y'];
+          s2.lin_p.x -= vals['overlap_x'];
+          s2.lin_p.y -= vals['overlap_y'];
+
       }
   }
 }
@@ -344,45 +355,54 @@ function animate(shapes, grouped_nodes) {
   }
 
   // Variables that need to be passed from function to function
+  var nodes = {
+    "n": 0,
+    "n2": 0,
+    "s": 0,
+    "s2": 0
+  }
   var values = {
     "sin": 0,
-    "cos": 0
+    "cos": 0,
+    "overlap_x": 0,
+    "overlap_y": 0
   }
 
-  var cost = 0;
-
-  for (i = 0; i < shapes.length; i++)
-      update_position(shapes[i], constants, values);
-
-  for (i = 0; i < shapes.length; i++)
-      momentum_damping(shapes[i], constants);
-
-  for (i = 0; i < grouped_nodes.length; i++)
-      update_nodes(grouped_nodes, constants, hooke);
-
-  cost = evaluateCost(grouped_nodes)
-
-  for (i = 0; i < shapes.length; i++)
-      collisions(shapes[i], values);
-
-  printCost(cost);
-
-  // 4) update svg
-  shape.attr("transform", affine);
-
-  iters += 1;
-
-
-  if (iters < total_iters) {
-      animate(shapes, grouped_nodes);
-      // window.requestAnimationFrame(animate(shapes, grouped_nodes));
-  } else {
-      console.log('done', iters);
+  var cost = {
+    "cost": 0
   }
+
+    for (i = 0; i < shapes.length; i++)
+        update_position(shapes[i], constants, values);
+
+    for (i = 0; i < shapes.length; i++)
+        momentum_damping(shapes[i], constants);
+
+    for (i = 0; i < grouped_nodes.length; i++)
+        update_nodes(grouped_nodes, constants, hooke, nodes, cost);
+
+    for (i = 0; i < shapes.length; i++)
+        collisions(shapes[i], values);
+
+    printCost(cost.cost);
+
+    // 4) update svg
+    shape.attr("transform", affine);
+
+    iters += 1;
+
+
+    if (iters < total_iters) {
+        animate(shapes, grouped_nodes);
+        // window.requestAnimationFrame(animate(shapes, grouped_nodes));
+    } else {
+        console.log('dones', iters);
+    }
+
 }
 
 function start() {
-  // play_animation = true;
+  play_animation = true;
   iters = 0;
   animate(shapes, grouped_nodes);
   // window.requestAnimationFrame(animate(shapes, grouped_nodes));

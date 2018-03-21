@@ -48,9 +48,9 @@ Simulation.prototype.step = function(shapedata) {
     }
 
     // follow center of mass
-    shapes.forEach(function(elt) {
-      elt.pos.x -= x_center_of_mass / shapes.length;
-      elt.pos.y -= y_center_of_mass / shapes.length;
+    shapes.forEach(function(n) {
+      n.pos.x -= x_center_of_mass / shapes.length;
+      n.pos.y -= y_center_of_mass / shapes.length;
     });
 
     // apply spring forces by grouping of nodes by color
@@ -79,46 +79,36 @@ Simulation.prototype._update_coords = function(s) {
      *   dt
      *   angle_res
      */
-    if (s.locked) {
-      var cos = Math.cos(s.angle);
-      var sin = Math.sin(s.angle);
-
-      // c) update positions of nodes with new position and orientation
-      s.nodes.forEach(function(elt) {
-        elt.dx = cos * elt.ax - sin * elt.ay;
-        elt.dy = sin * elt.ax + cos * elt.ay;
-        elt.x = s.pos.x + elt.dx;
-        elt.y = s.pos.y + elt.dy;
-      });
-      return;
-    }
 
     var dt = this.dt,
         angle_res = this.angle_res;
 
-    // a) update position of shape's center
-    s.pos.x += s.lin_p.x / s.m * dt; // x
-    s.pos.y += s.lin_p.y / s.m * dt; // y
+    if (!s.locked) {
 
-    // b) update and discretize orientation (angle)
-    s.setAngle(
-        // setAngle updates positions of vertices as s.calcPoints
+        // a) update position of shape's center
+        s.pos.x += s.lin_p.x / s.m * dt; // x
+        s.pos.y += s.lin_p.y / s.m * dt; // y
 
-        Math.floor((
-            s.angle + (s.rot_p / s.I * dt)
-        ) / angle_res) * angle_res
+        // b) update and discretize orientation (angle)
+        s.setAngle(
+            // setAngle updates positions of vertices as s.calcPoints
 
-    );
+            Math.floor((
+                s.angle + (s.rot_p / s.I * dt)
+            ) / angle_res) * angle_res
+
+        );
+    }
 
     var cos = Math.cos(s.angle);
     var sin = Math.sin(s.angle);
 
     // c) update positions of nodes with new position and orientation
-    s.nodes.forEach(function(elt) {
-      elt.dx = cos * elt.ax - sin * elt.ay;
-      elt.dy = sin * elt.ax + cos * elt.ay;
-      elt.x = s.pos.x + elt.dx;
-      elt.y = s.pos.y + elt.dy;
+    s.nodes.forEach(function(n) {
+      n.dx = cos * n.ax - sin * n.ay;
+      n.dy = sin * n.ax + cos * n.ay;
+      n.x = s.pos.x + n.dx;
+      n.y = s.pos.y + n.dy;
     });
 };
 

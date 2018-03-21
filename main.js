@@ -112,10 +112,10 @@ function iterate_sim(shapedata, display, interactive) {
 
     sim.step(shapedata);
 
-    shapedata.shapes.forEach(function(elt) {
-      threshold = Math.max(threshold, Math.abs(elt.lin_p.x));
-      threshold = Math.max(threshold, Math.abs(elt.lin_p.y));
-      threshold = Math.max(threshold, Math.abs(elt.rot_p));
+    shapedata.shapes.forEach(function(n) {
+      threshold = Math.max(threshold, Math.abs(n.lin_p.x));
+      threshold = Math.max(threshold, Math.abs(n.lin_p.y));
+      threshold = Math.max(threshold, Math.abs(n.rot_p));
     });
 
     // returns true when finished

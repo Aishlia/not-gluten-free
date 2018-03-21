@@ -44,14 +44,14 @@ var D = {
         {x: -50, y: -100},
         {x: 50,  y: -100},
         {x: 50,  y: 100},
-        {x: -50, y: 50}
+        {x: -50, y: 100}
     ],
     nodes: [
         {x: 5, y: 40, color: 1},
         {x: 30, y: -20, color: 0}
     ]
 };
-var shapes = [A, B, C, D];
+var shapes = [A, B, C, D, A, B, C, D, A, B, C, D];
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -112,17 +112,17 @@ function iterate_sim(shapedata, display, interactive) {
 
     sim.step(shapedata);
 
-    for (i = 0; i < shapedata.shapes.length; i++) {
-        threshold = Math.max(threshold, Math.abs(shapedata.shapes[i].lin_p.x));
-        threshold = Math.max(threshold, Math.abs(shapedata.shapes[i].lin_p.y));
-        threshold = Math.max(threshold, Math.abs(shapedata.shapes[i].rot_p));
-    }
+    shapedata.shapes.forEach(function(elt) {
+      threshold = Math.max(threshold, Math.abs(elt.lin_p.x));
+      threshold = Math.max(threshold, Math.abs(elt.lin_p.y));
+      threshold = Math.max(threshold, Math.abs(elt.rot_p));
+    });
 
     // returns true when finished
     return !(threshold > 0.1 && iters < max_iters);
 }
 
-function write_cost(shapedata) { 
+function write_cost(shapedata) {
     d3.select("#cost").text(shapedata.get_cost().toPrecision(3));
 }
 
@@ -143,6 +143,10 @@ display.shape_drag_ended = function(d) {
     iters = 0;
 };
 
+display.shape_click = function(d) {
+    d.locked = this.locked ? true : false;
+};
+
 // fastest -> simulate up to maxiters then paint
 // interactive -> simulate and paint each step
 var animation_mode = 'interactive'; // 'fastest'; // 'interactive';
@@ -160,6 +164,7 @@ function animate() {
         } else {
             display.rerender();
             write_cost(shapedata);
+            // animate();
             window.requestAnimationFrame(animate);
         }
     }

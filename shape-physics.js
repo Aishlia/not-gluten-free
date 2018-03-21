@@ -12,14 +12,15 @@ function Simulation() {
     this.dt = 0.005;
 
     // hooke constant for node-node attractive forces
-    this.hooke = 2.5;
+    this.hooke = 1;
 
     // hookean constant for solid collisions
     this.solid_hooke = 1 / this.dt;
 
     // discretized angular resolution
-    this.angle_res = 30 * Math.PI / 180;
+    this.angle_res = Math.PI / 2;
 
+    // this.position_res =
     // TODO consider discretized position / dimensions
 
     // damping factor for translational momentum
@@ -31,28 +32,26 @@ function Simulation() {
 };
 
 Simulation.prototype.step = function(shapedata) {
-
     var shapes = shapedata.shapes,
         grouped_nodes = shapedata.grouped_nodes;
 
     // update positions of all shapes
     // apply momentum damping
     // update center of mass
-    var s, x_cm = 0, y_cm = 0;
+    var x_center_of_mass = 0, y_center_of_mass = 0;
     for (var i = 0; i < shapes.length; i++) {
-        s = shapes[i];
+        var s = shapes[i];
         this._update_coords(s);
         this._damp_p(s);
-        x_cm += s.pos.x;
-        y_cm += s.pos.y;
+        x_center_of_mass += s.pos.x;
+        y_center_of_mass += s.pos.y;
     }
 
     // follow center of mass
-    for (i = 0; i < shapes.length; i++) {
-        s = shapes[i];
-        s.pos.x -= x_cm / shapes.length;
-        s.pos.y -= y_cm / shapes.length;
-    }
+    shapes.forEach(function(elt) {
+      elt.pos.x -= x_center_of_mass / shapes.length;
+      elt.pos.y -= y_center_of_mass / shapes.length;
+    });
 
     // apply spring forces by grouping of nodes by color
     for (i = 0; i < grouped_nodes.length; i++) {
@@ -60,11 +59,10 @@ Simulation.prototype.step = function(shapedata) {
     }
 
     // apply collision forces to each pair of shapes
-    var s2, j;
     for (i = 0; i < shapes.length; i++) {
-        s = shapes[i];
-        for (j = 0; j < i; j++) {
-            s2 = shapes[j];
+        var s = shapes[i];
+        for (var j = 0; j < i; j++) {
+            var s2 = shapes[j];
             this._apply_collision(s, s2);
         }
     }
@@ -81,6 +79,9 @@ Simulation.prototype._update_coords = function(s) {
      *   dt
      *   angle_res
      */
+
+    if (s.locked)
+       return;
 
     var dt = this.dt,
         angle_res = this.angle_res;
@@ -103,16 +104,12 @@ Simulation.prototype._update_coords = function(s) {
     var sin = Math.sin(s.angle);
 
     // c) update positions of nodes with new position and orientation
-    var n;
-
-    for (var j = 0; j < s.nodes.length; j++) {
-        n = s.nodes[j];
-
-        n.dx = cos * n.ax - sin * n.ay;
-        n.dy = sin * n.ax + cos * n.ay;
-        n.x = s.pos.x + n.dx;
-        n.y = s.pos.y + n.dy;
-    }
+    s.nodes.forEach(function(elt) {
+      elt.dx = cos * elt.ax - sin * elt.ay;
+      elt.dy = sin * elt.ax + cos * elt.ay;
+      elt.x = s.pos.x + elt.dx;
+      elt.y = s.pos.y + elt.dy;
+    });
 };
 
 Simulation.prototype._damp_p = function(s) {
@@ -128,7 +125,7 @@ Simulation.prototype._damp_p = function(s) {
     s.lin_p.y *= this.linp_damping;
     s.rot_p *= this.rotp_damping;
 };
-       
+
 Simulation.prototype._apply_colored_spring = function(node_group, shapes) {
     /*
      * p += f(x)

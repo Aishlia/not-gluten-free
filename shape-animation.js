@@ -12,6 +12,19 @@ function ShapeSVG(shapedata, svg) {
         .attr("transform", this.affine_shape_update)
         // outline
         .append("polygon")
+          .on("click", function(d) {
+            if (d3.event.defaultPrevented) return;
+
+            var locked = this.locked ? false : true;
+            this.locked = locked;
+            shapesvg_instance.shape_click.call(this, d);
+
+            if (this.locked)
+              d3.select(this).style("fill-opacity", "0.1")
+            else
+              d3.select(this).style("fill-opacity", "0.0")
+          })
+          // .on("click", clicked)
         .attr("points", function(s) {
             var out = "";
             for (i = 0; i < s.points.length; i++) {
@@ -49,7 +62,7 @@ function ShapeSVG(shapedata, svg) {
                 .on("end", function(d) {
                     shapesvg_instance.shape_drag_ended.call(this, d);
                 })
-        );
+        )
 }
 
 ShapeSVG.prototype.rerender = function() {

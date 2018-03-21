@@ -79,9 +79,19 @@ Simulation.prototype._update_coords = function(s) {
      *   dt
      *   angle_res
      */
+    if (s.locked) {
+      var cos = Math.cos(s.angle);
+      var sin = Math.sin(s.angle);
 
-    if (s.locked)
-       return;
+      // c) update positions of nodes with new position and orientation
+      s.nodes.forEach(function(elt) {
+        elt.dx = cos * elt.ax - sin * elt.ay;
+        elt.dy = sin * elt.ax + cos * elt.ay;
+        elt.x = s.pos.x + elt.dx;
+        elt.y = s.pos.y + elt.dy;
+      });
+      return;
+    }
 
     var dt = this.dt,
         angle_res = this.angle_res;
@@ -158,7 +168,6 @@ Simulation.prototype._apply_colored_spring = function(node_group, shapes) {
         for (k = 0; k < j; k++) {
             n2 = node_group[k];
             s2 = shapes[n2.s_index];
-
             // linear forces applied to both shapes
             s.lin_p.x += hooke * (n2.x - n.x) * dt;
             s.lin_p.y += hooke * (n2.y - n.y) * dt;
@@ -186,6 +195,7 @@ Simulation.prototype._apply_collision = function(s, s2) {
      *   dt
      *   solid_hooke
      */
+
 
     var repulsion = this.dt * this.solid_hooke;
 

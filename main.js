@@ -1,60 +1,89 @@
-// demonstrating with hard-coded shapes
-// all coordinates relative to shape's local coordinates
-// vertices ordered counter-clockwise
-// colors are numbers starting at 0
+function coord_generation(shapeList) {
+    var converted_shapes = [];
+    var new_shape;
 
-var A = {
-    vertices: [ // assumed convex for now. In future allow multiple shapes
-        {x: -50, y: -50},
-        {x: 50,  y: -50},
-        {x: 50,  y: 50},
-        {x: -50, y: 50}
-    ],
-    nodes: [
-        {x: 30, y: 30, color: 1},
-        {x: 30, y: -30, color: 0},
-    ]
-};
-var B = {
-    vertices: [
-        {x: -50, y: -50},
-        {x: 50,  y: -50},
-        {x: 50,  y: 50},
-        {x: -50, y: 50}
-    ],
-    nodes: [
-        {x: 30, y: 30, color: 0},
-        {x: 30, y: -30, color: 1}
-    ]
-};
-var C = {
-    vertices: [
-        {x: -50, y: -100},
-        {x: 50,  y: -100},
-        {x: 50,  y: 100},
-        {x: -50, y: 100}
-    ],
-    nodes: [
-        {x: 5, y: 80, color: 0},
-        {x: 30, y: -20, color: 1}
-    ]
-};
-var D = {
-    vertices: [
-        {x: -50, y: -100},
-        {x: 50,  y: -100},
-        {x: 50,  y: 100},
-        {x: -50, y: 100}
-    ],
-    nodes: [
-        {x: 5, y: 40, color: 1},
-        {x: 30, y: -20, color: 0}
-    ]
-};
-var shapes = [A, B, C, D, A, B, C, D];
+    for (shape of shapeList) {
+      var vertices = [];
 
-////////////////////////////////////////////////////////////////////////////////
+      if (typeof shape.coordinates === 'undefined') {
+        shape.coordinates = { x: 0, y: 0};
+      }
 
+      var center = {
+        x: shape.coordinates.x,
+        y: shape.coordinates.y
+      }
+
+      if (shape.dimensions['h'] && shape.dimensions['w']) {
+        x_adjust = shape.dimensions['w']/2;
+        y_adjust = shape.dimensions['h']/2;
+
+        new_shape = {
+            vertices: [
+                {x: (center.x - x_adjust), y: (center.y - y_adjust)},
+                {x: (center.x + x_adjust),  y: (center.y - y_adjust)},
+                {x: (center.x + x_adjust),  y: (center.y + y_adjust)},
+                {x: (center.x - x_adjust),  y: (center.y + y_adjust)}
+            ],
+            nodes: [{x: center.x, y: center.y, color: 1},
+                    {x: center.x + 5, y: center.y + 5, color: 2}],
+            pinned: shape.pinned
+        };
+      } else if (shape.dimensions['r']) {
+          var radius = shape.dimensions['r'];
+          var coordinates = shape.coordinates;
+          var rotation = shape.rotation;
+          var pinned = shape.pinned;
+          var vertices = [];
+
+          var sides = 30;
+          var theta = 0;
+          for (var i = 0; i < sides; i++) {
+            theta += (2*Math.PI)/sides;
+            vertices.push({x: (radius * Math.cos(theta)) + center.x,
+                           y: radius * Math.sin(theta) + center.y})
+          }
+
+          new_shape = {
+            vertices: vertices,
+            nodes: [{x: center.x, y: center.y, color: 1},
+                    {x: center.x + 5, y: center.y + 5, color: 2}],
+            pinned: shape.pinned
+          }
+      }
+      converted_shapes.push(new_shape);
+    }
+    return converted_shapes;
+}
+
+var shapeList = [
+    {
+        dimensions: { h: 50, w: 50}, // most likely assume in mm (1mm = 3.779528px)
+        coordinates: { x: 50, y: 50}, // in px also may be undefined (when initializing)
+        rotation: 90, // in degrees
+        pinned: true,
+    },
+    {
+        dimensions: { r: 20 },
+        coordinates: undefined,
+        rotation: 0,
+        pinned: false,
+    },
+]
+
+var shapes = coord_generation(shapeList);
+
+var bounding_box = {
+  vertices: [
+      {x: -300, y: -300},
+      {x: 300, y: -300},
+      {x: 300, y: 100},
+      {x: 0, y: 250},
+      {x: -300, y: 100}
+  ]
+};
+
+// ////////////////////////////////////////////////////////////////////////////////
 // initialize data structure <shape-definition.js>
 //
 // exposes:
@@ -63,7 +92,6 @@ var shapes = [A, B, C, D, A, B, C, D];
 //
 var shapedata = new ShapeData(shapes);
 
-// random initial placement
 for (var i = 0; i < shapedata.shapes.length; i++) {
     var s = shapedata.shapes[i];
 
@@ -168,6 +196,11 @@ function animate() {
             window.requestAnimationFrame(animate);
         }
     }
+}
+
+function clickMe(){
+  bullshit = document.getElementById("bullshit").value;
+  console.log(bullshit)
 }
 
 animate();

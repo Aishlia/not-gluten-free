@@ -32,6 +32,10 @@ function Simulation() {
 };
 
 Simulation.prototype.step = function(shapedata) {
+  if (typeof shapedata.grouped_nodes[0] === 'undefined') { // Find out why there is an empty
+    shapedata.grouped_nodes.shift();
+  }
+
     var shapes = shapedata.shapes,
         grouped_nodes = shapedata.grouped_nodes;
 
@@ -55,6 +59,7 @@ Simulation.prototype.step = function(shapedata) {
 
     // apply spring forces by grouping of nodes by color
     for (i = 0; i < grouped_nodes.length; i++) {
+        console.log(grouped_nodes)
         this._apply_colored_spring(grouped_nodes[i], shapes);
     }
 

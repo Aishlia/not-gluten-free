@@ -64,6 +64,7 @@ function ShapeData(source_shapes) {
         }
 
         this.shapes[i] = s;
+        this.pinned = source_shapes.pinned;
     }
 }
 

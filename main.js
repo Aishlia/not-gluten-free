@@ -93,11 +93,11 @@ var bounding_box = {
 var shapedata = new ShapeData(shapes);
 
 for (var i = 0; i < shapedata.shapes.length; i++) {
-    var s = shapedata.shapes[i];
+    var shape = shapedata.shapes[i];
 
-    s.pos.x += (Math.random() - 0.5) * window.innerWidth;
-    s.pos.y += (Math.random() - 0.5) * window.innerHeight;
-    s.setAngle(Math.random() * 2 * Math.PI);
+    shape.pos.x += shapeList[i].coordinates.x;
+    shape.pos.y += shapeList[i].coordinates.y;
+    shape.setAngle(shapeList[i].rotation*(180/Math.PI));
 }
 
 // setup simulation engine <shape-physics.js>
@@ -124,6 +124,11 @@ var svg = d3.select("#display").append("svg")
 //
 var display = new ShapeSVG(shapedata, svg);
 
+for (i in shapeList) {
+  if (shapeList[i].pinned) {
+    display.locked = true;
+  }
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////

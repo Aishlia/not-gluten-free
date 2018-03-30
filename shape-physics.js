@@ -59,7 +59,6 @@ Simulation.prototype.step = function(shapedata) {
 
     // apply spring forces by grouping of nodes by color
     for (i = 0; i < grouped_nodes.length; i++) {
-        console.log(grouped_nodes)
         this._apply_colored_spring(grouped_nodes[i], shapes);
     }
 

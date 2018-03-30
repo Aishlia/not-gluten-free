@@ -12,6 +12,7 @@ function ShapeSVG(shapedata, svg) {
         .attr("transform", this.affine_shape_update)
         // outline
         .append("polygon")
+          // .attr("locked", true)
           .on("click", function(d) {
             if (d3.event.defaultPrevented) return;
 
@@ -24,7 +25,6 @@ function ShapeSVG(shapedata, svg) {
             else
               d3.select(this).style("fill-opacity", "0.0")
           })
-          // .on("click", clicked)
         .attr("points", function(s) {
             var out = "";
             for (i = 0; i < s.points.length; i++) {

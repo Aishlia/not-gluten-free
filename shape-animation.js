@@ -12,11 +12,11 @@ function ShapeSVG(shapedata, svg) {
         .attr("transform", this.affine_shape_update)
         // outline
         .append("polygon")
-          // .attr("locked", true)
+          .attr("locked", true)
           .on("click", function(d) {
             if (d3.event.defaultPrevented) return;
 
-            var locked = this.locked ? false : true;
+            var locked = !this.locked;
             this.locked = locked;
             shapesvg_instance.shape_click.call(this, d);
 

@@ -107,7 +107,7 @@ for (var i = 0; i < shapedata.shapes.length; i++) {
 //
 //   step(shapedata): applies dt time interval to shapedata
 //
-var sim = new Simulation();
+var sim = new Simulation(); // not d3 stuff
 
 // create svg
 var svg = d3.select("#display").append("svg")
@@ -122,7 +122,11 @@ var svg = d3.select("#display").append("svg")
 // exposes:
 //   rerender: updates the SVG
 //
-var display = new ShapeSVG(shapedata, svg);
+
+console.log(shapedata)
+var display = new ShapeSVG(shapedata, svg); // d3 stuff
+console.log(shapedata)
+
 
 for (i in shapeList) {
   if (shapeList[i].pinned) {
@@ -138,7 +142,7 @@ var iters = 0,
     max_iters = 1000,
     done = false;
 
-function iterate_sim(shapedata, display, interactive) {
+function iterate_sim(shapedata, sim) {
     // Early termination or recursion
     iters += 1;
     threshold = 0; // maximum component of momentum
@@ -185,8 +189,7 @@ display.shape_click = function(d) {
 var animation_mode = 'interactive'; // 'fastest'; // 'interactive';
 
 function animate() {
-
-    done = iterate_sim(shapedata, sim, display);
+    done = iterate_sim(shapedata, sim);
 
     if (done) {
         write_cost(shapedata);
@@ -205,7 +208,7 @@ function animate() {
 
 function clickMe(){
   bullshit = document.getElementById("bullshit").value;
-  console.log(bullshit)
+  console.log("bullshit")
 }
 
 animate();

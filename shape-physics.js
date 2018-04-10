@@ -96,7 +96,6 @@ Simulation.prototype._update_coords = function(s) {
         // b) update and discretize orientation (angle)
         s.setAngle(
             // setAngle updates positions of vertices as s.calcPoints
-
             Math.floor((
                 s.angle + (s.rot_p / s.I * dt)
             ) / angle_res) * angle_res

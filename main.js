@@ -178,21 +178,11 @@ for (var i = 0; i < shapedata.shapes.length; i++) {
 //
 var sim = new Simulation(); // not d3 stuff
 
-// create svg
-var svg = d3.select("#display").append("svg")
-    .attr("width", window.innerWidth)
-    .attr("height", window.innerHeight)
-  .append("g")
-    .attr("transform", "translate(" + window.innerWidth / 2 + ", " +
-                                      window.innerHeight / 2 + ")");
-
 // create handles for animation <shape-animation.js>
 //
 // exposes:
 //   rerender: updates the SVG
 //
-
-var display = new ShapeSVG(shapedata, svg); // d3 stuff
 
 for (i in shapeList) {
   if (shapeList[i].pinned) {
@@ -225,61 +215,23 @@ function iterate_sim(shapedata, sim) {
     return !(threshold > 0.1 && iters < max_iters); // *note* originally &&
 }
 
-function write_cost(shapedata) {
-    d3.select("#cost").text(shapedata.get_cost().toPrecision(3));
-}
-
-// allow interaction to continue the simulation, and freeze interaction when
-// done
-display.shape_drag_started = function(d) {
-    iters = 0;
-};
-display.shape_dragged = function(d) {
-    if (!done) {
-        d.pos.x = d3.event.x;
-        d.pos.y = d3.event.y;
-        d3.select(this)
-            .attr("transform", this.affine_shape_update);
-    }
-};
-display.shape_drag_ended = function(d) {
-    iters = 0;
-};
-
-display.shape_click = function(d) {
-    d.locked = this.locked ? true : false;
-};
-
 // fastest -> simulate up to maxiters then paint
 // interactive -> simulate and paint each step
-var animation_mode = 'interactive'; // 'fastest'; // 'interactive';
+var animation_mode = 'fastest'; // 'fastest'; // 'interactive';
 
 function generate_output_coords(shapedata) {
   console.log(shapedata);
 }
 
-function animate() {
+function animate(shapedata) {
     done = iterate_sim(shapedata, sim);
 
     if (done) {
         generate_output_coords(shapedata);
-        write_cost(shapedata);
-        display.rerender();
     } else {
-        if (animation_mode == 'fastest') {
-            animate();
-        } else {
-            display.rerender();
-            write_cost(shapedata);
-            // animate();
-            window.requestAnimationFrame(animate);
-        }
+        animate(shapedata)
     }
 }
 
-function clickMe(){
-  bullshit = document.getElementById("bullshit").value;
-  console.log("bullshit")
-}
-
-animate();
+console.log(shapedata)
+animate(shapedata);

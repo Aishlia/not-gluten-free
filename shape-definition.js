@@ -1,6 +1,7 @@
 // depends on SAT
 
 function ShapeData(source_shapes) {
+    console.log(source_shapes)
     this.shapes = JSON.parse(JSON.stringify(source_shapes));
     this.grouped_nodes = [];
 
@@ -65,6 +66,7 @@ function ShapeData(source_shapes) {
 
         this.shapes[i] = s;
         this.pinned = source_shapes.pinned;
+        console.log(s)
     }
 }
 

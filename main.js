@@ -198,10 +198,6 @@ function iterate_sim(shapedata, sim) {
     return !(threshold > 0.1 && iters < max_iters); // *note* originally &&
 }
 
-// fastest -> simulate up to maxiters then paint
-// interactive -> simulate and paint each step
-var animation_mode = 'fastest'; // 'fastest'; // 'interactive';
-
 function generate_output_coords(shapedata, shapeList) {
     output_coords = [];
 

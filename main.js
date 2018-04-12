@@ -176,6 +176,22 @@ for (var i = 0; i < shapedata.shapes.length; i++) {
 //
 //   step(shapedata): applies dt time interval to shapedata
 //
+// // create svg
+// var svg = d3.select("#display").append("svg")
+//     .attr("width", window.innerWidth)
+//     .attr("height", window.innerHeight)
+//   .append("g")
+//     .attr("transform", "translate(" + window.innerWidth / 2 + ", " +
+//                                       window.innerHeight / 2 + ")");
+
+// create handles for animation <shape-animation.js>
+//
+// exposes:
+//   rerender: updates the SVG
+//
+
+// var display = new ShapeSVG(shapedata, svg); // d3 stuff
+
 var sim = new Simulation(); // not d3 stuff
 
 // create handles for animation <shape-animation.js>
@@ -219,19 +235,32 @@ function iterate_sim(shapedata, sim) {
 // interactive -> simulate and paint each step
 var animation_mode = 'fastest'; // 'fastest'; // 'interactive';
 
-function generate_output_coords(shapedata) {
-  console.log(shapedata);
+function generate_output_coords(shapedata, shapeList) {
+    output_coords = [];
+
+    for (s in shapedata.shapes) {
+        new_shape = shapeList[s]
+        new_shape.coordinates = {x: shapedata.shapes[s].pos.x, y: shapedata.shapes[s].pos.y}
+        new_shape.rotation = shapedata.shapes[s].angle * 180 / Math.PI
+        output_coords.push(new_shape)
+    }
+
+    return output_coords
 }
 
-function animate(shapedata) {
+function animate(shapedata, shapeList) {
     done = iterate_sim(shapedata, sim);
 
     if (done) {
-        generate_output_coords(shapedata);
+        result = generate_output_coords(shapedata, shapeList);
+         // display.rerender();
     } else {
-        animate(shapedata)
+        animate(shapedata, shapeList)
     }
+
+    return result;
 }
 
-console.log(shapedata)
-animate(shapedata);
+result = animate(shapedata, shapeList)
+
+console.log(result)

@@ -51,18 +51,6 @@ function ShapeSVG(shapedata, svg) {
                 .attr("r", 3)
                 .attr("fill", function(n) { return fill(n.color); });
         })
-        .call(
-            d3.drag()
-                .on("start", function(d) {
-                    shapesvg_instance.shape_drag_started.call(this, d);
-                })
-                .on("drag", function(d) {
-                    shapesvg_instance.shape_dragged.call(this, d);
-                })
-                .on("end", function(d) {
-                    shapesvg_instance.shape_drag_ended.call(this, d);
-                })
-        )
 }
 
 ShapeSVG.prototype.rerender = function() {
@@ -70,32 +58,18 @@ ShapeSVG.prototype.rerender = function() {
 };
 
 ShapeSVG.prototype.affine_shape_update = function(s) {
+    console.log("s", s)
     /**
      * Create string for injecting into svg attributes
      * for a given shape by referencing that shape's
      * internal variables.
      */
+     console.log("translate(" +
+       s.pos.x + ", " +
+       s.pos.y + ") " +
+       "rotate(" + (s.angle * 180 / Math.PI) + ")")
 	  return "translate(" +
         s.pos.x + ", " +
         s.pos.y + ") " +
         "rotate(" + (s.angle * 180 / Math.PI) + ")";
-};
-
-////////////////////////////////////////////////////////////////////////////////
-// Base Mouse interaction functions
-
-ShapeSVG.prototype.shape_drag_started = function(d) {
-    console.log('protostart');
-};
-
-ShapeSVG.prototype.shape_dragged = function(d) {
-    console.log('proto');
-    d.pos.x = d3.event.x;
-    d.pos.y = d3.event.y;
-    d3.select(this)
-        .attr("transform", this.affine_shape_update);
-};
-
-ShapeSVG.prototype.shape_drag_ended = function(d) {
-    console.log('protoend');
 };

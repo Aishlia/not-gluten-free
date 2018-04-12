@@ -99,6 +99,16 @@ var shapeList = [
     ]
     },
     {
+        dimensions: { h: 50, w: 50}, // most likely assume in mm (1mm = 3.779528px)
+        coordinates: { x: 50, y: 50}, // in px also may be undefined (when initializing)
+        rotation: 90, // in degrees
+        pinned: true,
+        nodes: [ // defined in relation to the center of the shape
+        {x: 0, y: 20, color: 1},
+        {x: 20, y: 0, color: 0},
+    ]
+    },
+    {
         dimensions: { r: 20 },
         coordinates: undefined,
         rotation: 0,
@@ -152,13 +162,7 @@ var bounding_box = {
   ]
 };
 
-// ////////////////////////////////////////////////////////////////////////////////
-// initialize data structure <shape-definition.js>
-//
-// exposes:
-//   shapes: list of shape objects
-//   grouped_nodes: color-indexed lists of nodes
-//
+// /////////////////////////////////////////////////////////////////////////////
 var shapedata = new ShapeData(shapes);
 
 for (var i = 0; i < shapedata.shapes.length; i++) {
@@ -169,44 +173,7 @@ for (var i = 0; i < shapedata.shapes.length; i++) {
     shape.setAngle(shapeList[i].rotation*(180/Math.PI));
 }
 
-// setup simulation engine <shape-physics.js>
-//
-// exposes:
-//   [all simulation parameters]
-//
-//   step(shapedata): applies dt time interval to shapedata
-//
-// // create svg
-// var svg = d3.select("#display").append("svg")
-//     .attr("width", window.innerWidth)
-//     .attr("height", window.innerHeight)
-//   .append("g")
-//     .attr("transform", "translate(" + window.innerWidth / 2 + ", " +
-//                                       window.innerHeight / 2 + ")");
-
-// create handles for animation <shape-animation.js>
-//
-// exposes:
-//   rerender: updates the SVG
-//
-
-// var display = new ShapeSVG(shapedata, svg); // d3 stuff
-
-var sim = new Simulation(); // not d3 stuff
-
-// create handles for animation <shape-animation.js>
-//
-// exposes:
-//   rerender: updates the SVG
-//
-
-for (i in shapeList) {
-  if (shapeList[i].pinned) {
-    display.locked = true;
-  }
-}
-
-
+var sim = new Simulation();
 ////////////////////////////////////////////////////////////////////////////////
 
 var iters = 0,

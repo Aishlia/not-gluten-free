@@ -1,3 +1,4 @@
+// Converting from input shapes to usable SAT shapes
 function generate_rectangle(shape, center) {
   x_adjust = shape.dimensions['w']/2;
   y_adjust = shape.dimensions['h']/2;
@@ -87,6 +88,79 @@ function convert_shape_list(shapeList) {
     return converted_shape_list
 }
 
+function moving_shapes_to_coords(shapedata, shapeList) {
+    for (var i = 0; i < shapedata.shapes.length; i++) {
+        var shape = shapedata.shapes[i];
+
+        shape.pos.x += shapeList[i].coordinates.x;
+        shape.pos.y += shapeList[i].coordinates.y;
+        shape.setAngle(shapeList[i].rotation*(180/Math.PI));
+    }
+}
+
+// new Simulation from shape-physics.js
+var sim = new Simulation();
+
+var iters = 0,
+    threshold = 0,
+    max_iters = 1000,
+    done = false;
+
+function iterate_sim(shapedata, sim) {
+    // Early termination or recursion
+    iters += 1;
+    threshold = 0; // maximum component of momentum
+
+    sim.step(shapedata);
+
+    shapedata.shapes.forEach(function(n) {
+      threshold = Math.max(threshold, Math.abs(n.lin_p.x));
+      threshold = Math.max(threshold, Math.abs(n.lin_p.y));
+      threshold = Math.max(threshold, Math.abs(n.rot_p));
+    });
+
+    // returns true when finished
+    return !(threshold > 0.1 && iters < max_iters); // *note* originally &&
+}
+
+function generate_output_coords(shapedata, shapeList) {
+    output_coords = [];
+
+    for (s in shapedata.shapes) {
+        new_shape = shapeList[s]
+        new_shape.coordinates = {x: shapedata.shapes[s].pos.x, y: shapedata.shapes[s].pos.y}
+        new_shape.rotation = shapedata.shapes[s].angle * 180 / Math.PI
+        output_coords.push(new_shape)
+    }
+
+    return output_coords
+}
+
+function animate(shapedata, shapeList) {
+    done = iterate_sim(shapedata, sim);
+
+    if (done) {
+        result = generate_output_coords(shapedata, shapeList);
+         // display.rerender();
+    } else {
+        animate(shapedata, shapeList)
+    }
+
+    return result;
+}
+
+function get_output(shapeList, bounding_box){
+    var shapes = convert_shape_list(shapeList)
+
+    var shapedata = new ShapeData(shapes);
+
+    moving_shapes_to_coords(shapedata, shapeList)
+
+    output_coords = animate(shapedata, shapeList)
+
+    return output_coords
+}
+
 var shapeList = [
     {
         dimensions: { h: 50, w: 50}, // most likely assume in mm (1mm = 3.779528px)
@@ -150,8 +224,6 @@ var shapeList = [
     }
 ]
 
-var shapes = convert_shape_list(shapeList);
-
 var bounding_box = {
   vertices: [
       {x: -300, y: -300},
@@ -162,68 +234,5 @@ var bounding_box = {
   ]
 };
 
-// /////////////////////////////////////////////////////////////////////////////
-var shapedata = new ShapeData(shapes);
-
-for (var i = 0; i < shapedata.shapes.length; i++) {
-    var shape = shapedata.shapes[i];
-
-    shape.pos.x += shapeList[i].coordinates.x;
-    shape.pos.y += shapeList[i].coordinates.y;
-    shape.setAngle(shapeList[i].rotation*(180/Math.PI));
-}
-
-var sim = new Simulation();
-////////////////////////////////////////////////////////////////////////////////
-
-var iters = 0,
-    threshold = 0,
-    max_iters = 1000,
-    done = false;
-
-function iterate_sim(shapedata, sim) {
-    // Early termination or recursion
-    iters += 1;
-    threshold = 0; // maximum component of momentum
-
-    sim.step(shapedata);
-
-    shapedata.shapes.forEach(function(n) {
-      threshold = Math.max(threshold, Math.abs(n.lin_p.x));
-      threshold = Math.max(threshold, Math.abs(n.lin_p.y));
-      threshold = Math.max(threshold, Math.abs(n.rot_p));
-    });
-
-    // returns true when finished
-    return !(threshold > 0.1 && iters < max_iters); // *note* originally &&
-}
-
-function generate_output_coords(shapedata, shapeList) {
-    output_coords = [];
-
-    for (s in shapedata.shapes) {
-        new_shape = shapeList[s]
-        new_shape.coordinates = {x: shapedata.shapes[s].pos.x, y: shapedata.shapes[s].pos.y}
-        new_shape.rotation = shapedata.shapes[s].angle * 180 / Math.PI
-        output_coords.push(new_shape)
-    }
-
-    return output_coords
-}
-
-function animate(shapedata, shapeList) {
-    done = iterate_sim(shapedata, sim);
-
-    if (done) {
-        result = generate_output_coords(shapedata, shapeList);
-         // display.rerender();
-    } else {
-        animate(shapedata, shapeList)
-    }
-
-    return result;
-}
-
-result = animate(shapedata, shapeList)
-
+result = get_output(shapeList, bounding_box)
 console.log(result)

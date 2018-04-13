@@ -1,5 +1,3 @@
-// depends on SAT, shape-definition.js
-
 function Simulation() {
    /*
     * create a new simulation engine for shapes

@@ -53,8 +53,8 @@ function ShapeData(source_shapes) {
         s.forces = new SAT.Vector(0, 0); // net x, y force vector
         s.torques = 0;                   // net counter-clockwise torque
         s.lin_p = new SAT.Vector(0, 0);  // linear momentum: x, y
-        s.rot_p = 0;
-        s.pinned = source_shapes[i].pinned;                  // counter-clockwise angular momentum
+        s.rot_p = 0; // counter-clockwise angular momentum
+        s.pinned = source_shapes[i].pinned;
 
         s.m = 0.1; // mass
         s.I = 0;   // rotational inertia

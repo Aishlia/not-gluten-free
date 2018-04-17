@@ -37,10 +37,6 @@ Simulation.prototype.step = function(shapedata) {
     var shapes = shapedata.shapes,
         grouped_nodes = shapedata.grouped_nodes;
 
-    // console.log(shapedata)
-    // console.log(shapes)
-    // console.log(grouped_nodes)
-
     // update positions of all shapes
     // apply momentum damping
     // update center of mass

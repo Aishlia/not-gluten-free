@@ -141,7 +141,6 @@ function animate(shapedata, shapeList) {
 
     if (done) {
         result = generate_output_coords(shapedata, shapeList);
-         // display.rerender();
     } else {
         animate(shapedata, shapeList)
     }

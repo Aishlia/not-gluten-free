@@ -161,6 +161,24 @@ function get_output(shapeList, bounding_box){
     return output_coords
 }
 
+function draw_output(output_coords) {
+    x_offset = 250
+    y_offset = 300
+    console.log(output_coords)
+    canvas_coors = []
+    for (s of output_coords) {
+        let cx = document.querySelector("canvas").getContext("2d");
+        if (s.dimensions.r) {
+            cx.beginPath();
+            cx.arc(s.coordinates.x + x_offset, s.coordinates.y + y_offset, s.dimensions.r, 0, 7);
+            cx.stroke();
+        } else if (!s.dimensions.r) {
+            // cx.rotate(s.rotation*Math.PI/180)
+            // cx.strokeRect(s.coordinates.x + 250 - (s.dimensions.w/2), s.coordinates.y + 300 - (s.dimensions.h/2), s.dimensions.w, s.dimensions.h);
+        }
+    }
+}
+
 var shapeList = [
     {
         dimensions: { h: 50, w: 50}, // most likely assume in mm (1mm = 3.779528px)
@@ -183,7 +201,7 @@ var shapeList = [
     ]
     },
     {
-        dimensions: { r: 20 },
+        dimensions: { r: 40 },
         coordinates: undefined,
         rotation: 0,
         pinned: false,
@@ -203,7 +221,7 @@ var shapeList = [
     ]
     },
     {
-        dimensions: { r: 40 },
+        dimensions: { r: 20 },
         coordinates: undefined,
         rotation: 0,
         pinned: false,
@@ -214,7 +232,7 @@ var shapeList = [
     },
     {
         dimensions: { h: 50, w: 50}, // most likely assume in mm (1mm = 3.779528px)
-        coordinates: { x: 250, y: 50}, // in px also may be undefined (when initializing)
+        coordinates: { x: 50, y: 50}, // in px also may be undefined (when initializing)
         rotation: 90, // in degrees
         pinned: true,
         nodes: [ // defined in relation to the center of the shape
@@ -235,4 +253,6 @@ var bounding_box = {
 };
 
 result = get_output(shapeList, bounding_box)
-console.log(result)
+console.log("result", result)
+
+draw_output(output_coords)

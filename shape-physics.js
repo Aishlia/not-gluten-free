@@ -175,7 +175,6 @@ Simulation.prototype._apply_colored_spring = function(node_group, shapes) {
                 n2.dy * (n.x - n2.x)
             ) * dt;
         }
-        break;
     }
 };
 

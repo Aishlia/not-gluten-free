@@ -1,7 +1,7 @@
 var shapeList = [
     {
         dimensions: { h: 60, w: 90}, // most likely assume in mm (1mm = 3.779528px)
-        coordinates: { x: 50, y: 50}, // in px also may be undefined (when initializing)
+        coordinates: { x: 10, y: 100}, // in px also may be undefined (when initializing)
         rotation: 90, // in degrees
         pinned: true,
         nodes: [ // defined in relation to the center of the shape
@@ -41,7 +41,7 @@ var shapeList = [
     },
     {
         dimensions: { h: 50, w: 50}, // most likely assume in mm (1mm = 3.779528px)
-        coordinates: { x: 250, y: 50}, // in px also may be undefined (when initializing)
+        coordinates: { x: 80, y: 50}, // in px also may be undefined (when initializing)
         rotation: 90, // in degrees
         pinned: true,
         nodes: [ // defined in relation to the center of the shape

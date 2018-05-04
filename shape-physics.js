@@ -32,9 +32,9 @@ function Simulation() {
 };
 
 Simulation.prototype.step = function(shapedata) {
-  if (typeof shapedata.grouped_nodes[0] === 'undefined') { // Find out why there is an empty
-    shapedata.grouped_nodes.shift();
-  }
+    if (typeof shapedata.grouped_nodes[0] === 'undefined') { // Find out why there is an empty
+      shapedata.grouped_nodes.shift();
+    }
 
     var shapes = shapedata.shapes,
         grouped_nodes = shapedata.grouped_nodes;
@@ -44,11 +44,10 @@ Simulation.prototype.step = function(shapedata) {
     // update center of mass
     var x_center_of_mass = 0, y_center_of_mass = 0;
     for (var i = 0; i < shapes.length; i++) {
-        var s = shapes[i];
-        this._update_coords(s);
-        this._damp_p(s);
-        x_center_of_mass += s.pos.x;
-        y_center_of_mass += s.pos.y;
+        this._update_coords(shapes[i]);
+        this._damp_p(shapes[i]);
+        x_center_of_mass += shapes[i].pos.x;
+        y_center_of_mass += shapes[i].pos.y;
     }
 
     // follow center of mass
@@ -87,21 +86,18 @@ Simulation.prototype._update_coords = function(s) {
     var dt = this.dt,
         angle_res = this.angle_res;
 
-    if (!s.locked) {
+    // a) update position of shape's center
+    s.pos.x += s.lin_p.x / s.m * dt; // x
+    s.pos.y += s.lin_p.y / s.m * dt; // y
 
-        // a) update position of shape's center
-        s.pos.x += s.lin_p.x / s.m * dt; // x
-        s.pos.y += s.lin_p.y / s.m * dt; // y
+    // b) update and discretize orientation (angle)
+    s.setAngle(
+        // setAngle updates positions of vertices as s.calcPoints
+        Math.floor((
+            s.angle + (s.rot_p / s.I * dt)
+        ) / angle_res) * angle_res
 
-        // b) update and discretize orientation (angle)
-        s.setAngle(
-            // setAngle updates positions of vertices as s.calcPoints
-            Math.floor((
-                s.angle + (s.rot_p / s.I * dt)
-            ) / angle_res) * angle_res
-
-        );
-    }
+    );
 
     var cos = Math.cos(s.angle);
     var sin = Math.sin(s.angle);

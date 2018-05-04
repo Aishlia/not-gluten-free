@@ -49,6 +49,7 @@ function ShapeData(source_shapes) {
         // convert s to SAT Polygon
 
         s = new SAT.Polygon(new SAT.Vector(), vertices);
+        s.pinned = source_shapes[i].pinned;
         s.nodes = nodes;
         s.forces = new SAT.Vector(0, 0); // net x, y force vector
         s.torques = 0;                   // net counter-clockwise torque
@@ -64,7 +65,6 @@ function ShapeData(source_shapes) {
         }
 
         this.shapes[i] = s;
-        this.pinned = source_shapes.pinned;
     }
 }
 

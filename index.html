@@ -1,86 +1,15 @@
 <html>
-    <head>
-        <style>
-         .whole {
-           display: flex;
-         }
-         .left {
-           width: 80%;
-           height: 100vh;
-         }
-         .right{
-           width: 20%;
-           padding: 20px;
-           height: 100vh;
-           border-left: 1px solid #eee;
-           z-index: 1000;
-         }
 
-         .button{
-            background: #01ADF2;
-            border-radius: 30px;
-            color: #fff;
-            font-size: .73em;
-            line-height: 1.25em;
-            letter-spacing: .05em;
-            font-weight: 700;
-            padding-top: 12px;
-            padding-bottom: 12px;
-            padding-left: 30px;
-            padding-right: 30px;
-            text-transform: uppercase;
-            font-family: 'proxima-nova','sans-serif';
-            display: inline-block;
-            transition: all .2s ease-in-out;
-         }
+<body>
+  <div id="cost" style="position: fixed; x:0; y: 0;"></div>
+  <div id="display"></div>
 
-         input{
-           display: block;
-           width: 100%;
-           -webkit-box-sizing: border-box;
-           box-sizing: border-box;
-           padding: 14px 20px;
-           font-size: 15px;
-           height: 60px;
-           line-height: 30px;
-           border: 1px solid #e1e1e1;
-           border-radius: 0;
-           margin-top: 15px;
-         }
+  <script src="SAT.js"></script>
+  <script src="d3.v4.min.js"></script>
+  <script src="shape-definition.js"></script>
+  <script src="shape-physics.js"></script>
+  <script src="shape-animation.js"></script>
+  <script src="main.js"></script>
+</body>
 
-         .wrap{
-           margin-top: 20px;
-         }
-
-         .center {
-           text-align: center;
-         }
-        </style>
-    </head>
-    <body>
-        <div class="whole">
-        <div class="left">
-          <div id="display"></div>
-        </div>
-        <div class="right">
-          <div class="wrap">
-            <div id="cost"></div>
-          </div>
-          <div class="wrap">
-            <input id="bullshit" type="text">
-          </div>
-          <div class="wrap center">
-            <button class="button" onclick="clickMe()">Click Me</button>
-          </div>
-        </div>
-        </div>
-        <button onclick="clickMe()">Click Me</button>
-        <script src="d3.v4.min.js"></script>
-        <script src="d3-selection-multi.v1.min.js"></script>
-        <script src="SAT.js"></script>
-        <script src="shape-definition.js"></script>
-        <script src="shape-physics.js"></script>
-        <script src="shape-animation.js"></script>
-        <script src="main.js"></script>
-    </body>
 </html>

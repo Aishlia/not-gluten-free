@@ -1,3 +1,67 @@
+var shapeList = [
+    {
+        dimensions: { h: 60, w: 90}, // most likely assume in mm (1mm = 3.779528px)
+        coordinates: { x: 50, y: 50}, // in px also may be undefined (when initializing)
+        rotation: 90, // in degrees
+        pinned: true,
+        nodes: [ // defined in relation to the center of the shape
+        {x: 0, y: 20, color: 1},
+        {x: 20, y: 0, color: 0},
+    ]
+    },
+    {
+        dimensions: { r: 20 },
+        coordinates: undefined,
+        rotation: 0,
+        pinned: false,
+        nodes: [
+        {x: 15, y: 0, color: 1},
+        {x: -15, y: 0, color: 0},
+    ]
+    },
+    {
+        dimensions: { r: 30 },
+        coordinates: undefined,
+        rotation: 0,
+        pinned: false,
+        nodes: [
+        {x: 15, y: 0, color: 1},
+        {x: -15, y: 0, color: 0},
+    ]
+    },
+    {
+        dimensions: { r: 40 },
+        coordinates: undefined,
+        rotation: 0,
+        pinned: false,
+        nodes: [
+        {x: 15, y: 0, color: 1},
+        {x: -15, y: 0, color: 0},
+    ]
+    },
+    {
+        dimensions: { h: 50, w: 50}, // most likely assume in mm (1mm = 3.779528px)
+        coordinates: { x: 250, y: 50}, // in px also may be undefined (when initializing)
+        rotation: 90, // in degrees
+        pinned: true,
+        nodes: [ // defined in relation to the center of the shape
+        {x: 0, y: 20, color: 1},
+        {x: 20, y: 0, color: 0},
+    ]
+    }
+]
+
+var boundingBox = {
+  vertices: [
+      {x: -300, y: -300},
+      {x: 300, y: -300},
+      {x: 300, y: 100},
+      {x: 0, y: 250},
+      {x: -300, y: 100}
+  ]
+};
+
+// Converting from input shapes to usable SAT shapes
 function generate_rectangle(shape, center) {
   x_adjust = shape.dimensions['w']/2;
   y_adjust = shape.dimensions['h']/2;
@@ -87,119 +151,21 @@ function convert_shape_list(shapeList) {
     return converted_shape_list
 }
 
-var shapeList = [
-    {
-        dimensions: { h: 50, w: 50}, // most likely assume in mm (1mm = 3.779528px)
-        coordinates: { x: 50, y: 50}, // in px also may be undefined (when initializing)
-        rotation: 90, // in degrees
-        pinned: true,
-        nodes: [ // defined in relation to the center of the shape
-        {x: 0, y: 20, color: 1},
-        {x: 20, y: 0, color: 0},
-    ]
-    },
-    {
-        dimensions: { r: 20 },
-        coordinates: undefined,
-        rotation: 0,
-        pinned: false,
-        nodes: [
-        {x: 15, y: 0, color: 1},
-        {x: -15, y: 0, color: 0},
-    ]
-    },
-    {
-        dimensions: { r: 30 },
-        coordinates: undefined,
-        rotation: 0,
-        pinned: false,
-        nodes: [
-        {x: 15, y: 0, color: 1},
-        {x: -15, y: 0, color: 0},
-    ]
-    },
-    {
-        dimensions: { r: 40 },
-        coordinates: undefined,
-        rotation: 0,
-        pinned: false,
-        nodes: [
-        {x: 15, y: 0, color: 1},
-        {x: -15, y: 0, color: 0},
-    ]
-    },
-    {
-        dimensions: { h: 50, w: 50}, // most likely assume in mm (1mm = 3.779528px)
-        coordinates: { x: 250, y: 50}, // in px also may be undefined (when initializing)
-        rotation: 90, // in degrees
-        pinned: true,
-        nodes: [ // defined in relation to the center of the shape
-        {x: 0, y: 20, color: 1},
-        {x: 20, y: 0, color: 0},
-    ]
+function generate_shapedata(shapeList) {
+  var shapes = convert_shape_list(shapeList);
+  // var shapedata = new ShapeData(shapes);
+  return (new ShapeData(shapes)) //shapedata
+}
+
+function moving_shapes_to_coords(shapedata, shapeList) {
+    for (var i = 0; i < shapedata.shapes.length; i++) {
+        var shape = shapedata.shapes[i];
+
+        shape.pos.x += shapeList[i].coordinates.x;
+        shape.pos.y += shapeList[i].coordinates.y;
+        shape.setAngle(shapeList[i].rotation*(180/Math.PI));
     }
-]
-
-var shapes = convert_shape_list(shapeList);
-
-var bounding_box = {
-  vertices: [
-      {x: -300, y: -300},
-      {x: 300, y: -300},
-      {x: 300, y: 100},
-      {x: 0, y: 250},
-      {x: -300, y: 100}
-  ]
-};
-
-// ////////////////////////////////////////////////////////////////////////////////
-// initialize data structure <shape-definition.js>
-//
-// exposes:
-//   shapes: list of shape objects
-//   grouped_nodes: color-indexed lists of nodes
-//
-var shapedata = new ShapeData(shapes);
-
-for (var i = 0; i < shapedata.shapes.length; i++) {
-    var shape = shapedata.shapes[i];
-
-    shape.pos.x += shapeList[i].coordinates.x;
-    shape.pos.y += shapeList[i].coordinates.y;
-    shape.setAngle(shapeList[i].rotation*(180/Math.PI));
 }
-
-// setup simulation engine <shape-physics.js>
-//
-// exposes:
-//   [all simulation parameters]
-//
-//   step(shapedata): applies dt time interval to shapedata
-//
-var sim = new Simulation(); // not d3 stuff
-
-// create svg
-var svg = d3.select("#display").append("svg")
-    .attr("width", window.innerWidth)
-    .attr("height", window.innerHeight)
-  .append("g")
-    .attr("transform", "translate(" + window.innerWidth / 2 + ", " +
-                                      window.innerHeight / 2 + ")");
-
-// create handles for animation <shape-animation.js>
-//
-// exposes:
-//   rerender: updates the SVG
-//
-
-var display = new ShapeSVG(shapedata, svg); // d3 stuff
-
-for (i in shapeList) {
-  if (shapeList[i].pinned) {
-    display.locked = true;
-  }
-}
-
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -225,61 +191,60 @@ function iterate_sim(shapedata, sim) {
     return !(threshold > 0.1 && iters < max_iters); // *note* originally &&
 }
 
-function write_cost(shapedata) {
-    d3.select("#cost").text(shapedata.get_cost().toPrecision(3));
-}
+function generate_output_coords(shapedata, shapeList) {
+    output_coords = [];
 
-// allow interaction to continue the simulation, and freeze interaction when
-// done
-display.shape_drag_started = function(d) {
-    iters = 0;
-};
-display.shape_dragged = function(d) {
-    if (!done) {
-        d.pos.x = d3.event.x;
-        d.pos.y = d3.event.y;
-        d3.select(this)
-            .attr("transform", this.affine_shape_update);
+    for (s in shapedata.shapes) {
+        new_shape = shapeList[s]
+        new_shape.coordinates = {x: shapedata.shapes[s].pos.x, y: shapedata.shapes[s].pos.y}
+        new_shape.rotation = shapedata.shapes[s].angle * 180 / Math.PI
+        output_coords.push(new_shape)
     }
-};
-display.shape_drag_ended = function(d) {
-    iters = 0;
-};
 
-display.shape_click = function(d) {
-    d.locked = this.locked ? true : false;
-};
-
-// fastest -> simulate up to maxiters then paint
-// interactive -> simulate and paint each step
-var animation_mode = 'interactive'; // 'fastest'; // 'interactive';
-
-function generate_output_coords(shapedata) {
-  console.log(shapedata);
+    return output_coords
 }
 
-function animate() {
+function animate(shapedata, shapeList) {
     done = iterate_sim(shapedata, sim);
 
     if (done) {
-        generate_output_coords(shapedata);
-        write_cost(shapedata);
-        display.rerender();
+        result = generate_output_coords(shapedata, shapeList);
+        write_cost(shapedata); // d3
+        display.rerender(); // d3
     } else {
-        if (animation_mode == 'fastest') {
-            animate();
-        } else {
-            display.rerender();
-            write_cost(shapedata);
-            // animate();
-            window.requestAnimationFrame(animate);
-        }
+        animate(shapedata, shapeList);
     }
+
+    return result;
+  }
+
+// ////////////////////////////////////////////////////////////////////////////////
+var sim = new Simulation();
+
+var shapedata = generate_shapedata(shapeList)
+
+moving_shapes_to_coords(shapedata, shapeList)
+
+function main(shapeList, boudingBox) {
+    output_coords = animate(shapedata, shapeList, sim)
+
+    return output_coords
 }
 
-function clickMe(){
-  bullshit = document.getElementById("bullshit").value;
-  console.log("bullshit")
-}
+// start
+var svg = d3.select("#display").append("svg")
+    .attr("width", window.innerWidth)
+    .attr("height", window.innerHeight)
+  .append("g")
+    .attr("transform", "translate(" + window.innerWidth / 2 + ", " +
+                                      window.innerHeight / 2 + ")");
 
-animate();
+var display = new ShapeSVG(shapedata, svg);
+
+function write_cost(shapedata) {
+    d3.select("#cost").text(shapedata.get_cost().toPrecision(3));
+}
+// stop
+
+output_coords = main(shapeList, boundingBox)
+console.log(output_coords)

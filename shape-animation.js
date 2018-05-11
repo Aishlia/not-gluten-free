@@ -12,19 +12,6 @@ function ShapeSVG(shapedata, svg) {
      .attr("transform", this.affine_shape_update)
      // outline
      .append("polygon")
-     .attr("locked", true)
-     .on("click", function(d) {
-       if (d3.event.defaultPrevented) return;
-
-       var locked = !this.locked;
-       this.locked = locked;
-       shapesvg_instance.shape_click.call(this, d);
-
-       if (this.locked)
-         d3.select(this).style("fill-opacity", "0.1")
-       else
-         d3.select(this).style("fill-opacity", "0.0")
-     })
      .attr("points", function(s) {
        var out = "";
        for (i = 0; i < s.points.length; i++) {
@@ -57,18 +44,6 @@ function ShapeSVG(shapedata, svg) {
            return fill(n.color);
          });
      })
-     .call(
-       d3.drag()
-       .on("start", function(d) {
-         shapesvg_instance.shape_drag_started.call(this, d);
-       })
-       .on("drag", function(d) {
-         shapesvg_instance.shape_dragged.call(this, d);
-       })
-       .on("end", function(d) {
-         shapesvg_instance.shape_drag_ended.call(this, d);
-       })
-     )
  }
 
 ShapeSVG.prototype.rerender = function() {
@@ -86,23 +61,4 @@ ShapeSVG.prototype.affine_shape_update = function(s) {
      s.pos.x + ", " +
      s.pos.y + ") " +
      "rotate(" + (s.angle * 180 / Math.PI) + ")";
- };
-
- ////////////////////////////////////////////////////////////////////////////////
- // Base Mouse interaction functions
-
-ShapeSVG.prototype.shape_drag_started = function(d) {
-   console.log('protostart');
- };
-
-ShapeSVG.prototype.shape_dragged = function(d) {
-   console.log('proto');
-   d.pos.x = d3.event.x;
-   d.pos.y = d3.event.y;
-   d3.select(this)
-     .attr("transform", this.affine_shape_update);
- };
-
-ShapeSVG.prototype.shape_drag_ended = function(d) {
-   console.log('protoend');
  };

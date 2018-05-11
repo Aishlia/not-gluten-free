@@ -1,7 +1,7 @@
 var shapeList = [
     {
         dimensions: { h: 60, w: 90}, // most likely assume in mm (1mm = 3.779528px)
-        coordinates: { x: 10, y: 100}, // in px also may be undefined (when initializing)
+        coordinates: { x: -100, y: 30}, // in px also may be undefined (when initializing)
         rotation: 90, // in degrees
         pinned: true,
         nodes: [ // defined in relation to the center of the shape
@@ -43,6 +43,26 @@ var shapeList = [
         dimensions: { h: 50, w: 50}, // most likely assume in mm (1mm = 3.779528px)
         coordinates: { x: 80, y: 50}, // in px also may be undefined (when initializing)
         rotation: 90, // in degrees
+        pinned: false,
+        nodes: [ // defined in relation to the center of the shape
+        {x: 0, y: 20, color: 1},
+        {x: 20, y: 0, color: 0},
+    ]
+  },
+  {
+      dimensions: { h: 100, w: 100}, // most likely assume in mm (1mm = 3.779528px)
+      coordinates: { x: 80, y: 50}, // in px also may be undefined (when initializing)
+      rotation: 90, // in degrees
+      pinned: false,
+      nodes: [ // defined in relation to the center of the shape
+      {x: 0, y: 20, color: 1},
+      {x: 20, y: 0, color: 0},
+  ]
+  },
+    {
+        dimensions: { h: 50, w: 50}, // most likely assume in mm (1mm = 3.779528px)
+        coordinates: { x: 80, y: 50}, // in px also may be undefined (when initializing)
+        rotation: 90, // in degrees
         pinned: true,
         nodes: [ // defined in relation to the center of the shape
         {x: 0, y: 20, color: 1},
@@ -53,16 +73,16 @@ var shapeList = [
 
 var boundingBox = {
   vertices: [
-      {x: -300, y: -300},
-      {x: 300, y: -300},
-      {x: 300, y: 100},
-      {x: 0, y: 250},
-      {x: -300, y: 100}
+      {x: -400, y: -400},
+      {x: 400, y: -400},
+      {x: 400, y: 400},
+      {x: -400, y: 400}
   ]
 };
 
 // Converting from input shapes to usable SAT shapes
 function generate_rectangle(shape, center) {
+  console.log(shape)
   x_adjust = shape.dimensions['w']/2;
   y_adjust = shape.dimensions['h']/2;
 
@@ -82,7 +102,8 @@ function generate_rectangle(shape, center) {
   new_shape = {
       vertices: vertices,
       nodes: shape.nodes,
-      pinned: shape.pinned
+      pinned: shape.pinned,
+      center: center
   };
 
   return new_shape;
@@ -112,7 +133,8 @@ function generate_circle(shape, center) {
   new_shape = {
     vertices: vertices,
     nodes: shape.nodes,
-    pinned: shape.pinned
+    pinned: shape.pinned,
+    center: center
   }
 
   return new_shape;
@@ -139,7 +161,42 @@ function convert_shape(shape) {
       return converted_shape;
 }
 
-function convert_shape_list(shapeList) {
+function make_bounding_box(boudingBox){
+    console.log(boundingBox)
+    i = boundingBox.vertices
+    thick = 100
+    length = 2 * Math.abs(i[1].x - i[0].x)
+    return [{
+        dimensions: { h: thick, w: length}, // most likely assume in mm (1mm = 3.779528px)
+        coordinates: { x: i[1].x, y: i[1].y-thick/2}, // in px also may be undefined (when initializing)
+        rotation: 0, // in degrees
+        pinned: true,
+        nodes: [{x: 0, y: 20, color: 4}]
+    },
+    {
+        dimensions: { h: thick, w: length}, // most likely assume in mm (1mm = 3.779528px)
+        coordinates: { x: i[2].x+thick/2, y: i[2].y}, // in px also may be undefined (when initializing)
+        rotation: 90, // in degrees
+        pinned: true,
+        nodes: [{x: 0, y: 20, color: 4}]
+    },
+    {
+        dimensions: { h: thick, w: length}, // most likely assume in mm (1mm = 3.779528px)
+        coordinates: { x: i[3].x, y: i[3].y+thick/2}, // in px also may be undefined (when initializing)
+        rotation: 180, // in degrees
+        pinned: true,
+        nodes: [{x: 0, y: 20, color: 4}]
+    },
+    {
+        dimensions: { h: thick, w: length}, // most likely assume in mm (1mm = 3.779528px)
+        coordinates: { x: i[0].x-thick/2, y: i[0].y}, // in px also may be undefined (when initializing)
+        rotation: 270, // in degrees
+        pinned: true,
+        nodes: [{x: 0, y: 20, color: 4}]
+    }]
+}
+
+function convert_shape_list(shapeList, boundingBox) {
     var converted_shape_list = [];
     var converted_shape;
 
@@ -151,20 +208,15 @@ function convert_shape_list(shapeList) {
     return converted_shape_list
 }
 
-function generate_shapedata(shapeList) {
-  var shapes = convert_shape_list(shapeList);
+function generate_shapedata(shapeList, boundingBox) {
+  var shapes = convert_shape_list(shapeList, boundingBox);
+  // bounding_box = convert_shape_list(make_bounding_box(boundingBox))
+  // for (i of bounding_box) {
+  //   shapes.push(i)
+  // }
+
   // var shapedata = new ShapeData(shapes);
   return (new ShapeData(shapes)) //shapedata
-}
-
-function moving_shapes_to_coords(shapedata, shapeList) {
-    for (var i = 0; i < shapedata.shapes.length; i++) {
-        var shape = shapedata.shapes[i];
-
-        shape.pos.x += shapeList[i].coordinates.x;
-        shape.pos.y += shapeList[i].coordinates.y;
-        shape.setAngle(shapeList[i].rotation*(180/Math.PI));
-    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -182,9 +234,9 @@ function iterate_sim(shapedata, sim) {
     sim.step(shapedata);
 
     shapedata.shapes.forEach(function(n) {
-      threshold = Math.max(threshold, Math.abs(n.lin_p.x));
-      threshold = Math.max(threshold, Math.abs(n.lin_p.y));
-      threshold = Math.max(threshold, Math.abs(n.rot_p));
+      if (!n.pinned) threshold = Math.max(threshold, Math.abs(n.lin_p.x));
+      if (!n.pinned) threshold = Math.max(threshold, Math.abs(n.lin_p.y));
+      if (!n.pinned) threshold = Math.max(threshold, Math.abs(n.rot_p));
     });
 
     // returns true when finished
@@ -222,16 +274,15 @@ function animate(shapedata, shapeList) {
 var sim = new Simulation();
 
 var shapedata = generate_shapedata(shapeList)
+console.log(shapedata)
 
-moving_shapes_to_coords(shapedata, shapeList)
-
-function main(shapeList, boudingBox) {
-    output_coords = animate(shapedata, shapeList, sim)
+function main(boudingBox) {
+    output_coords = animate(shapedata, shapeList)
 
     return output_coords
 }
 
-// start
+// d3 start
 var svg = d3.select("#display").append("svg")
     .attr("width", window.innerWidth)
     .attr("height", window.innerHeight)
@@ -246,5 +297,5 @@ function write_cost(shapedata) {
 }
 // stop
 
-output_coords = main(shapeList, boundingBox)
+output_coords = main(boundingBox)
 console.log(output_coords)

@@ -32,29 +32,39 @@ function Simulation() {
 };
 
 Simulation.prototype.step = function(shapedata) {
-  if (typeof shapedata.grouped_nodes[0] === 'undefined') { // Find out why there is an empty
-    shapedata.grouped_nodes.shift();
-  }
+    // console.log(shapedata)
+    if (typeof shapedata.grouped_nodes[0] === 'undefined') { // Find out why there is an empty
+      shapedata.grouped_nodes.shift();
+    }
 
     var shapes = shapedata.shapes,
         grouped_nodes = shapedata.grouped_nodes;
+
+        // console.log("start", shapes)
+
+
+    pinned_shapes = []
 
     // update positions of all shapes
     // apply momentum damping
     // update center of mass
     var x_center_of_mass = 0, y_center_of_mass = 0;
     for (var i = 0; i < shapes.length; i++) {
-        var s = shapes[i];
-        this._update_coords(s);
-        this._damp_p(s);
-        x_center_of_mass += s.pos.x;
-        y_center_of_mass += s.pos.y;
+        // console.log(shapes[i])
+        // if (!shapes[i].pinned)
+        if (shapes[i].pinned) {
+          pinned_shapes.push(shapes[i])
+        }
+        this._update_coords(shapes[i]);
+        this._damp_p(shapes[i]);
+        x_center_of_mass += !shapes[i].pinned ? shapes[i].pos.x : 0;
+        y_center_of_mass += !shapes[i].pinned ? shapes[i].pos.y : 0;
     }
 
     // follow center of mass
     shapes.forEach(function(n) {
-      n.pos.x -= x_center_of_mass / shapes.length;
-      n.pos.y -= y_center_of_mass / shapes.length;
+      n.pos.x -= !n.pinned ? x_center_of_mass / shapes.length : 0;
+      n.pos.y -= !n.pinned ? y_center_of_mass / shapes.length : 0;
     });
 
     // apply spring forces by grouping of nodes by color
@@ -71,6 +81,18 @@ Simulation.prototype.step = function(shapedata) {
         }
     }
 
+    ctr = 0
+    for (i in shapes) {
+      if (shapes[i].pinned) {
+        // console.log("before", shapes[i])
+        shapes[i] = pinned_shapes[ctr]
+        // console.log(pinned_shapes[ctr])
+        // console.log("after", shapes[i])
+        ctr += 1
+      }
+    }
+    // console.log(shapes)
+    // debugger;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -87,20 +109,19 @@ Simulation.prototype._update_coords = function(s) {
     var dt = this.dt,
         angle_res = this.angle_res;
 
-    if (!s.locked) {
+    // a) update position of shape's center
+    s.pos.x += !s.pinned ? s.lin_p.x / s.m * dt : 0; // x
+    s.pos.y += !s.pinned ? s.lin_p.y / s.m * dt : 0; // y
 
-        // a) update position of shape's center
-        s.pos.x += s.lin_p.x / s.m * dt; // x
-        s.pos.y += s.lin_p.y / s.m * dt; // y
+    // b) update and discretize orientation (angle)
+    if (!s.pinned){
+      s.setAngle(
+          // setAngle updates positions of vertices as s.calcPoints
+          Math.floor((
+              s.angle + (s.rot_p / s.I * dt)
+          ) / angle_res) * angle_res
 
-        // b) update and discretize orientation (angle)
-        s.setAngle(
-            // setAngle updates positions of vertices as s.calcPoints
-            Math.floor((
-                s.angle + (s.rot_p / s.I * dt)
-            ) / angle_res) * angle_res
-
-        );
+      );
     }
 
     var cos = Math.cos(s.angle);
@@ -108,10 +129,10 @@ Simulation.prototype._update_coords = function(s) {
 
     // c) update positions of nodes with new position and orientation
     s.nodes.forEach(function(n) {
-      n.dx = cos * n.ax - sin * n.ay;
-      n.dy = sin * n.ax + cos * n.ay;
-      n.x = s.pos.x + n.dx;
-      n.y = s.pos.y + n.dy;
+      n.dx = !s.pinned ? cos * n.ax - sin * n.ay : 0;
+      n.dy = !s.pinned ? sin * n.ax + cos * n.ay : 0;
+      n.x = !s.pinned ? s.pos.x + n.dx : 0;
+      n.y = !s.pinned ? s.pos.y + n.dy : 0;
     });
 };
 
@@ -123,10 +144,9 @@ Simulation.prototype._damp_p = function(s) {
      *   linp_damping
      *   rotp_damping
      */
-
-    s.lin_p.x *= this.linp_damping;
-    s.lin_p.y *= this.linp_damping;
-    s.rot_p *= this.rotp_damping;
+    s.lin_p.x *= !s.pinned ? this.linp_damping : 0;
+    s.lin_p.y *= !s.pinned ? this.linp_damping : 0;
+    s.rot_p *= !s.pinned ? this.rotp_damping : 0;
 };
 
 Simulation.prototype._apply_colored_spring = function(node_group, shapes) {
@@ -166,16 +186,20 @@ Simulation.prototype._apply_colored_spring = function(node_group, shapes) {
             s.lin_p.y += hooke * (n2.y - n.y) * dt;
             s2.lin_p.x += hooke * (n.x - n2.x) * dt;
             s2.lin_p.y += hooke * (n.y - n2.y) * dt;
+            // s.lin_p.x += !s.pinned ? hooke * (n2.x - n.x) * dt : 0;
+            // s.lin_p.y += !s.pinned ? hooke * (n2.y - n.y) * dt : 0;
+            // s2.lin_p.x += !s2.pinned ? hooke * (n.x - n2.x) * dt : 0;
+            // s2.lin_p.y += !s2.pinned ? hooke * (n.y - n2.y) * dt : 0;
 
             // torques applied to both shapes
-            s.rot_p += hooke * (
+            s.rot_p += !s.pinned ? hooke * (
                 n.dx * (n2.y - n.y) -
                 n.dy * (n2.x - n.x)
-            ) * dt;
-            s2.rot_p += hooke * (
+            ) * dt : 0;
+            s2.rot_p += !s2.pinned ? hooke * (
                 n2.dx * (n.y - n2.y) -
                 n2.dy * (n.x - n2.x)
-            ) * dt;
+            ) * dt : 0;
         }
     }
 };
@@ -188,7 +212,6 @@ Simulation.prototype._apply_collision = function(s, s2) {
      *   dt
      *   solid_hooke
      */
-
 
     var repulsion = this.dt * this.solid_hooke;
 
@@ -210,9 +233,9 @@ Simulation.prototype._apply_collision = function(s, s2) {
 
         // conserves linear momentum and applies
         // a psuedo-hookean force (linear-elastic)
-        s.lin_p.x += overlap_x * repulsion;
-        s.lin_p.y += overlap_y * repulsion;
-        s2.lin_p.x -= overlap_x * repulsion;
-        s2.lin_p.y -= overlap_y * repulsion;
+        s.lin_p.x += !s.pinned ? overlap_x * repulsion : 0;
+        s.lin_p.y += !s.pinned ? overlap_y * repulsion : 0;
+        s2.lin_p.x -= !s2.pinned ? overlap_x * repulsion : 0;
+        s2.lin_p.y -= !s2.pinned ? overlap_y * repulsion : 0;
     }
 };

@@ -47,8 +47,12 @@ function ShapeData(source_shapes) {
         }
 
         // convert s to SAT Polygon
+        console.log(source_shapes[i])
 
-        s = new SAT.Polygon(new SAT.Vector(), vertices);
+        s = !source_shapes[i].pinned ?
+            new SAT.Polygon(new SAT.Vector(), vertices) :
+            new SAT.Polygon(new SAT.Vector(source_shapes[i].center.x, source_shapes[i].center.y), vertices);
+        s.pinned = source_shapes[i].pinned;
         s.nodes = nodes;
         s.forces = new SAT.Vector(0, 0); // net x, y force vector
         s.torques = 0;                   // net counter-clockwise torque
@@ -58,13 +62,13 @@ function ShapeData(source_shapes) {
         s.m = 0.1; // mass
         s.I = 0;   // rotational inertia
 
+        console.log(s)
         for (j = 0; j < s.nodes.length; j++) {
             n = s.nodes[j];
-            s.I += s.m * (n.x ** 2 + n.y ** 2) / s.nodes.length;
+            s.I += !s.pinned ? s.m * (n.x ** 2 + n.y ** 2) / s.nodes.length : 0;
         }
 
         this.shapes[i] = s;
-        this.pinned = source_shapes.pinned;
     }
 }
 
